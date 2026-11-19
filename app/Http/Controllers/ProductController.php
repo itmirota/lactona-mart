@@ -1,44 +1,51 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\CategoryProduct;
+use App\Models\Product;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    // 1. READ: Menampilkan daftar produk
-    public function index()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(): View
     {
-        $products = Product::all();
+        $products = Product::with('category')->latest()->get();
+
         return view('admin.products.index', compact('products'));
     }
 
-    // 2. CREATE: Menampilkan form tambah produk
-    public function create()
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(): View
     {
-        // Ambil semua data kategori
-        $categories = CategoryProduct::all();
-        
-        // Kirim (passing) data variabel $categories ke view
+        $categories = CategoryProduct::orderBy('name')->get();
+
         return view('admin.products.create', compact('categories'));
     }
 
-    // 3. STORE: Menyimpan data produk baru ke database
-    public function store(Request $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'category_id' => 'required|exists:category_product,id',
             'name' => 'required|string|max:255',
-            'price' => 'required|numeric',
+            'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            // Menyimpan gambar ke folder public/storage/products
             $imagePath = $request->file('image')->store('products', 'public');
         }
 
@@ -50,37 +57,37 @@ class ProductController extends Controller
             'image' => $imagePath,
         ]);
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
-    // 4. EDIT: Menampilkan form edit produk
-    public function edit(Product $product)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Product $product): View
     {
-        // Ambil semua data kategori untuk dropdown
-        $categories = CategoryProduct::all();
-        
-        // Kirim (passing) $product dan $categories ke view
+        $categories = CategoryProduct::orderBy('name')->get();
+
         return view('admin.products.edit', compact('product', 'categories'));
     }
 
-    // 5. UPDATE: Memperbarui data produk
-    public function update(Request $request, Product $product)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Product $product): RedirectResponse
     {
         $request->validate([
             'category_id' => 'required|exists:category_product,id',
             'name' => 'required|string|max:255',
-            'price' => 'required|numeric',
+            'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $imagePath = $product->image;
         if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
             if ($product->image && Storage::disk('public')->exists($product->image)) {
                 Storage::disk('public')->delete($product->image);
             }
-            // Simpan gambar baru
             $imagePath = $request->file('image')->store('products', 'public');
         }
 
@@ -92,18 +99,20 @@ class ProductController extends Controller
             'image' => $imagePath,
         ]);
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
-    // 6. DELETE: Menghapus produk
-    public function destroy(Product $product)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Product $product): RedirectResponse
     {
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
-        
+
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus!');
     }
 }

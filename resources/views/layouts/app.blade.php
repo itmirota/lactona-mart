@@ -24,7 +24,7 @@
 
     <!-- Navigasi Utama menggunakan Alpine.js -->
     <!-- Atribut x-data=" { open: false } " menginisialisasi state 'open' untuk menu mobile -->
-    <nav class="bg-brand-dark sticky top-0 z-50 text-white py-5" x-data="{ open: false }" class="absolute w-full z-20 text-white p-6 transition-all duration-300">
+    <nav class="bg-brand-dark sticky top-0 z-50 text-white py-5 transition-all duration-300" x-data="{ open: false }">
         <div class=" max-w-7xl mx-auto flex items-center justify-between">
             
             <!-- Bagian Kiri: Logo -->
@@ -91,11 +91,11 @@
              style="display: none;"> <!-- style="display: none;" mencegah kedipan menu saat halaman pertama dimuat -->
             
             <ul class="flex flex-col px-8 pt-4 space-y-4 text-sm font-medium tracking-wide">
-                <li><a href="#" class="block hover:text-brand-accent transition-colors">HOME</a></li>
-                <li><a href="#" class="block hover:text-brand-accent transition-colors">SHOP</a></li>
-                <li><a href="#" class="block hover:text-brand-accent transition-colors">COLLECTIONS</a></li>
-                <li><a href="#" class="block hover:text-brand-accent transition-colors">INGREDIENTS</a></li>
+                <li><a href="/" class="block hover:text-brand-accent transition-colors">HOME</a></li>
+                <li><a href="/produk-kami" class="block hover:text-brand-accent transition-colors">PRODUK</a></li>
+                <li><a href="#" class="block hover:text-brand-accent transition-colors">COLLECTION</a></li>
                 <li><a href="#" class="block hover:text-brand-accent transition-colors">ABOUT US</a></li>
+                <li><a href="{{ route('admin.products.index') }}" class="block text-brand-accent hover:underline font-semibold transition-colors">ADMIN PANEL</a></li>
                 <li class="pt-4 border-t border-brand-teal/30">
                      <!-- Input pencarian khusus mobile -->
                     <div class="relative text-gray-800">

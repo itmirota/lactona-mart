@@ -5,7 +5,7 @@
     <!-- Bagian Header & Tombol Tambah -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 class="text-2xl font-bold text-gray-800">Daftar Produk</h1>
-        <a href="{{ route('products.create') }}" class="bg-brand-dark hover:bg-brand-accent text-white font-medium px-5 py-2.5 rounded-lg flex items-center transition-colors">
+        <a href="{{ route('admin.products.create') }}" class="bg-brand-dark hover:bg-brand-accent text-white font-medium px-5 py-2.5 rounded-lg flex items-center transition-colors">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             Tambah Produk
         </a>
@@ -70,11 +70,11 @@
                     <!-- Kolom Aksi (Edit & Hapus) -->
                     <td class="p-4">
                         <div class="flex items-center justify-center space-x-3">
-                            <a href="{{ route('products.edit', $product->id) }}" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 p-1.5 rounded-md transition-colors" title="Edit">
+                            <a href="{{ route('admin.products.edit', $product->id) }}" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 p-1.5 rounded-md transition-colors" title="Edit">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </a>
                             
-                            <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini? Data tidak dapat dikembalikan.');">
+                            <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini? Data tidak dapat dikembalikan.');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 p-1.5 rounded-md transition-colors" title="Hapus">
