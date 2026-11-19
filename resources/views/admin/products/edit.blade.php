@@ -1,10 +1,12 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
+@section('title', 'Edit Produk')
+@section('page-heading', 'Edit Produk')
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-8">
+<div class="max-w-4xl mx-auto">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Edit Produk: {{ $product->name }}</h1>
-        <a href="{{ route('products.index') }}" class="text-gray-600 hover:text-brand-dark flex items-center">
+        <a href="{{ route('admin.products.index') }}" class="text-gray-600 hover:text-brand-dark flex items-center">
             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Kembali
         </a>
@@ -24,7 +26,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <!-- Form Edit -->
         <!-- Jangan lupa menambahkan enctype="multipart/form-data" jika ada upload gambar -->
-        <form action="{{ route('products.update', $product->id) }}" method="POST" enctype="multipart/form-data" class="p-8">
+        <form action="{{ route('admin.products.update', $product->id) }}" method="POST" enctype="multipart/form-data" class="p-8">
             @csrf <!-- CSRF Token Laravel (Wajib) -->
             @method('PUT') <!-- Method Spoofing untuk mengubah POST menjadi PUT sesuai standar rute resource -->
 
@@ -99,7 +101,7 @@
 
             <!-- Tombol Aksi -->
             <div class="mt-8 flex justify-end">
-                <a href="{{ route('products.index') }}" class="bg-white border border-gray-300 text-gray-700 font-medium py-2 px-6 rounded-lg mr-3 hover:bg-gray-50 transition-colors">Batal</a>
+                <a href="{{ route('admin.products.index') }}" class="bg-white border border-gray-300 text-gray-700 font-medium py-2 px-6 rounded-lg mr-3 hover:bg-gray-50 transition-colors">Batal</a>
                 <button type="submit" class="bg-brand-dark hover:bg-brand-accent text-white font-medium py-2 px-8 rounded-lg transition-colors">Simpan Perubahan</button>
             </div>
         </form>

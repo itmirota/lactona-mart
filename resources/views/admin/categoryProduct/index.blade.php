@@ -1,7 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
+@section('title', 'Kategori Produk')
+@section('page-heading', 'Manajemen Kategori Produk')
 @section('content')
-<div class="max-w-6xl mx-auto px-4 py-8">
+<div class="max-w-6xl mx-auto">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Manajemen Kategori Produk</h1>

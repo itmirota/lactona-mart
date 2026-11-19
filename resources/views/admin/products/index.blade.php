@@ -1,7 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
+@section('title', 'Produk')
+@section('page-heading', 'Manajemen Produk')
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-8">
+<div class="max-w-7xl mx-auto">
     <!-- Bagian Header & Tombol Tambah -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 class="text-2xl font-bold text-gray-800">Daftar Produk</h1>
@@ -41,7 +43,7 @@
                     <!-- Kolom Gambar -->
                     <td class="p-4">
                         @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-12 h-12 object-cover rounded-md border border-gray-200 shadow-sm">
+                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-12 h-12 object-cover rounded-md border border-gray-200 shadow-sm">
                         @else
                             <div class="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center text-xs text-gray-400">
                                 Kosong
