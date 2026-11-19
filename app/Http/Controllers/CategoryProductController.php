@@ -3,59 +3,80 @@
 namespace App\Http\Controllers;
 
 use App\Models\CategoryProduct;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class CategoryProductController extends Controller
 {
-    // 1. READ: Menampilkan daftar produk
-    public function index()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(): View
     {
-        $CategoryProducts = CategoryProduct::all();
-        return view('admin.CategoryProduct.index', compact('CategoryProducts'));
+        $categoryProducts = CategoryProduct::all();
+
+        return view('admin.categoryProduct.index', [
+            'categoryProducts' => $categoryProducts,
+            'CategoryProducts' => $categoryProducts,
+        ]);
     }
 
-    // 2. CREATE: Menampilkan form tambah produk
-    public function create()
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(): View
     {
-        return view('admin.CategoryProduct.create');
+        return view('admin.categoryProduct.create');
     }
 
-    // 3. Menyimpan data produk baru ke database
-    public function store(Request $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        categoryProduct::create([
+        CategoryProduct::create([
             'name' => $request->name,
         ]);
 
-        return redirect()->route('categoryProducts.index')->with('success', 'Produk berhasil ditambahkan!');;
+        return redirect()->route('admin.categoryProducts.index')->with('success', 'Kategori berhasil ditambahkan!');
     }
 
-    // 4. edit
-    public function edit(CategoryProduct $categoryProduct)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(CategoryProduct $categoryProduct): View
     {
         return view('admin.categoryProduct.edit', compact('categoryProduct'));
     }
 
-    // 5. update
-    public function update(Request $request, CategoryProduct $categoryProduct)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, CategoryProduct $categoryProduct): RedirectResponse
     {
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
         $categoryProduct->update([
             'name' => $request->name,
         ]);
 
-        return redirect()->route('categoryProducts.index')->with('success', 'Produk berhasil diupdate!');
+        return redirect()->route('admin.categoryProducts.index')->with('success', 'Kategori berhasil diperbarui!');
     }
 
-    // 6. DELETE: Menghapus produk
-    public function destroy(CategoryProduct $categoryProduct)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(CategoryProduct $categoryProduct): RedirectResponse
     {
-        
         $categoryProduct->delete();
 
-        return redirect()->route('categoryProducts.index')->with('success', 'Produk berhasil dihapus!');
+        return redirect()->route('admin.categoryProducts.index')->with('success', 'Kategori berhasil dihapus!');
     }
 }

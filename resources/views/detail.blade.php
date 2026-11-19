@@ -17,7 +17,7 @@
 
     <!-- Main Product Section -->
     <div x-data="{ 
-        mainImage: '{{ asset('produk/Lactona Ibu Cokelat.png') }}', 
+        mainImage: '{{ isset($product) && $product ? $product->image_url : asset('produk/Lactona Ibu Cokelat.png') }}', 
         selectedVarian: 'Cokelat',
         isZoomed: false 
         }"

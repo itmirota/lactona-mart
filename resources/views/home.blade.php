@@ -2,17 +2,17 @@
 
 @section('content')
     <!-- Bagian Hero -->
-    <section class="relative w-full h-[700px] bg-brand-teal flex items-center bg-cover bg-center" style="background-image: url('{{ asset('storage/images/hero-model.jpg') }}');">
+    <section class="relative w-full h-[700px] bg-brand-teal flex items-center bg-cover bg-center" style="background-image: url('{{ asset('storage/images/hero-model.jpg') }}')">
         <!-- Overlay Gradasi -->
         <div class="absolute inset-0 bg-gradient-to-r from-brand-dark/90 via-brand-teal/60 to-transparent"></div>
         
         <div class="relative z-10 px-12 md:px-24 max-w-3xl text-white">
             <!-- <span class="text-sm tracking-[0.2em] uppercase opacity-90 mb-4 block">Kualitas</span> -->
             <h2 class="w-full text-6xl font-serif mb-6">
-                mulai sadar pentingnya asupan nutrisi tambahan untuk tumbuh kembang optimal.    
+                Mulai sadar pentingnya asupan nutrisi tambahan untuk tumbuh kembang optimal.
             </h2>
             <p class="text-sm opacity-90 mb-10 max-w-md leading-relaxed">
-                imbangi asupan makan dengan memberikan nutrisi tambahan yang tepat. untuk bantu maksimalkan tumbuh kembang.
+                Imbangi asupan makan dengan memberikan nutrisi tambahan yang tepat, untuk membantu memaksimalkan tumbuh kembang.
             </p>
             
             <div class="flex items-center space-x-6">
@@ -48,14 +48,14 @@
                 </div>
             </div>
             <div class="flex items-center space-x-4 px-4">
-                <div class="text-brand-accent">ðŸŒ¿</div>
+                <div class="text-brand-accent text-3xl">🌿</div>
                 <div>
                     <h4 class="text-sm font-bold text-gray-800">Formula khusus</h4>
                     <p class="text-xs text-gray-500 mt-1"> Formula khusus yang disesuaikan dengan kebutuhan nutrisi, memberikan keamanan dan kenyamanan konsumen</p>
                 </div>
             </div>
             <div class="flex items-center space-x-4 px-4">
-                <div class="text-brand-accent">ðŸŒ¿</div>
+                <div class="text-brand-accent text-3xl">✨</div>
                 <div>
                     <h4 class="text-sm font-bold text-gray-800">Mementingkan Kualitas Produk</h4>
                     <p class="text-xs text-gray-500 mt-1">Produk susu berkualitas tinggi, dengan harga yang tetap terjangkau. </p>
@@ -135,91 +135,63 @@
             <a href="/produk-kami" class="text-xs font-bold text-gray-500 hover:text-brand-teal tracking-wider border border-gray-300 px-4 py-1.5 rounded uppercase">View All</a>
         </div>
 
+        
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <!-- Kartu Produk 1 -->
-            <div class="group">
-                <div class="bg-brand-light relative aspect-[4/5] flex items-center justify-center p-6 mb-4 overflow-hidden">
-                    <!-- Label Status -->
-                    <span class="absolute top-4 left-4 bg-brand-dark text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-10">Best Seller</span>
-                    <!-- Gambar Produk Dummy -->
-                    <img src="{{ asset('produk/Lactona Skim.png') }}" alt="lactona skim">
-                </div>
-                <h4 class="text-sm font-medium text-gray-800 mb-1 leading-snug">Lactona Skim</h4>
-                <!-- <div class="flex items-center space-x-1 mb-2">
-                    <span class="text-yellow-400 text-xs">â˜…â˜…â˜…â˜…â˜…</span>
-                    <span class="text-xs text-gray-400">(245)</span>
-                </div> -->
-                <p class="text-lg font-bold text-gray-900 mb-4">Rp. 34.00</p>
-                <div class="flex space-x-2">
-                    <button class="flex-1 bg-brand-dark hover:bg-brand-teal text-white text-xs font-bold py-2.5 rounded transition-colors uppercase tracking-wide">Beli Sekarang &gt;</button>
-                    <!-- <button class="w-10 h-10 border border-gray-200 rounded flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                    </button> -->
-                </div>
-            </div>
 
-            <!-- Kartu Produk 2 -->
-             <div class="group">
-                <div class="bg-gray-100 relative aspect-[4/5] flex items-center justify-center p-6 mb-4 overflow-hidden">
-                    <span class="absolute top-4 left-4 bg-brand-teal text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-10">New</span>
-                    <img src="{{ asset('produk/Lactona Ibu Cokelat.png') }}" alt="lactona ibu">
-                </div>
-                <h4 class="text-sm font-medium text-gray-800 mb-1 leading-snug">Lactona Ibu</h4>
-                <!-- <div class="flex items-center space-x-1 mb-2">
-                    <span class="text-yellow-400 text-xs">â˜…â˜…â˜…â˜…â˜†</span>
-                    <span class="text-xs text-gray-400">(189)</span>
-                </div> -->
-                <p class="text-lg font-bold text-gray-900 mb-4">Rp. 42.00</p>
-                <div class="flex space-x-2">
-                    <button class="flex-1 bg-brand-dark hover:bg-brand-teal text-white text-xs font-bold py-2.5 rounded transition-colors uppercase tracking-wide">Beli Sekarang &gt;</button>
-                    <!-- <button class="w-10 h-10 border border-gray-200 rounded flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                    </button> -->
-                </div>
-            </div>
+            @forelse ($products as $product)
 
-            <!-- Kartu Produk 3 -->
-            <div class="group">
-                <div class="bg-brand-light relative aspect-[4/5] flex items-center justify-center p-6 mb-4 overflow-hidden">
-                    <span class="absolute top-4 left-4 bg-brand-accent text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-10">Limited</span>
-                    <img src="{{ asset('produk/Lactona Gold 3.png') }}" alt="lactona gold 3+">
-                </div>
-                <h4 class="text-sm font-medium text-gray-800 mb-1 leading-snug">Lactona Gold 3+</h4>
-                <!-- <div class="flex items-center space-x-1 mb-2">
-                    <span class="text-yellow-400 text-xs">â˜…â˜…â˜…â˜…â˜…</span>
-                    <span class="text-xs text-gray-400">(312)</span>
-                </div> -->
-                <p class="text-lg font-bold text-gray-900 mb-4">Rp. 38.00</p>
-                <div class="flex space-x-2">
-                    <button class="flex-1 bg-brand-dark hover:bg-brand-teal text-white text-xs font-bold py-2.5 rounded transition-colors uppercase tracking-wide">Beli Sekarang &gt;</button>
-                    <!-- <button class="w-10 h-10 border border-gray-200 rounded flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                    </button> -->
-                </div>
-            </div>
+                <div class="group">
 
-            <!-- Kartu Produk 4 (Dengan Harga Diskon) -->
-            <div class="group">
-                <div class="bg-gray-100 relative aspect-[4/5] flex items-center justify-center p-6 mb-4 overflow-hidden">
-                    <span class="absolute top-4 left-4 bg-teal-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-10">Sale</span>
-                    <img src="{{ asset('produk/Lactona Gold 3.png') }}" alt="lactona gold 3+">
+                    {{-- Gambar Produk --}}
+                    <div class="{{ $loop->even ? 'bg-gray-100' : 'bg-brand-light' }} relative aspect-[4/5] flex items-center justify-center p-6 mb-4 overflow-hidden">
+
+                        @if ($product->image)
+                            <img
+                                src="{{ asset('storage/' . $product->image) }}"
+                                alt="{{ $product->name }}"
+                                class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                                onerror="console.error('Gambar gagal dimuat:', this.src)"
+                            >
+                        @else
+                            <span class="text-sm text-gray-400">
+                                Gambar belum tersedia
+                            </span>
+                        @endif
+
+                    </div>
+
+                    {{-- Nama Produk --}}
+                    <h4 class="text-sm font-medium text-gray-800 mb-1 leading-snug">
+                        {{ $product->name }}
+                    </h4>
+
+                    {{-- Harga Produk --}}
+                    <p class="text-lg font-bold text-gray-900 mb-4">
+                        Rp. {{ number_format($product->price, 0, ',', '.') }}
+                    </p>
+
+                    {{-- Tombol Aksi --}}
+                    <div class="flex space-x-2">
+                        <a
+                            href="{{ url('/detail') }}"
+                            class="text-center flex-1 bg-brand-dark hover:bg-brand-teal text-white text-xs font-bold py-2.5 rounded transition-colors uppercase tracking-wide"
+                        >
+                            Beli Sekarang &gt;
+                        </a>
+                    </div>
+
                 </div>
-                <h4 class="text-sm font-medium text-gray-800 mb-1 leading-snug">Lactona 1+</h4>
-                <!-- <div class="flex items-center space-x-1 mb-2">
-                    <span class="text-yellow-400 text-xs">â˜…â˜…â˜…â˜…â˜†</span>
-                    <span class="text-xs text-gray-400">(156)</span>
-                </div> -->
-                <div class="flex items-end space-x-2 mb-4">
-                    <p class="text-lg font-bold text-gray-900">Rp. 24.00</p>
-                    <p class="text-xs text-gray-400 line-through pb-1">Rp. 30.00</p>
+
+            @empty
+
+                <div class="col-span-full text-center py-12">
+                    <p class="text-gray-500">
+                        Belum ada produk yang tersedia.
+                    </p>
                 </div>
-                <div class="flex space-x-2">
-                    <button class="flex-1 bg-brand-dark hover:bg-brand-teal text-white text-xs font-bold py-2.5 rounded transition-colors uppercase tracking-wide">Beli Sekarang &gt;</button>
-                    <!-- <button class="w-10 h-10 border border-gray-200 rounded flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                    </button> -->
-                </div>
-            </div>
+
+            @endforelse
+
         </div>
     </section>
 
@@ -228,7 +200,7 @@
         <div class="bg-brand-dark rounded-2xl flex flex-col md:flex-row items-center overflow-hidden">
             <!-- Gambar Tambahan (Kiri) -->
             <div class="w-full md:w-5/12 h-64 bg-brand-teal/80 flex items-center justify-center p-8">
-                    <img class="w-50" src="mirota-care.png" alt="mirota care">
+                    <img class="w-50" src="{{ asset('mirota-care.png') }}" alt="mirota care">
             </div>
             <!-- Teks Penawaran (Tengah) -->
             <div class="w-full md:w-4/12 p-8 md:pl-12 text-white text-center md:text-left">
