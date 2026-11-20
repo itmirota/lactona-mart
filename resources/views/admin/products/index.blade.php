@@ -30,6 +30,7 @@
                     <th class="p-4 font-semibold">Gambar</th>
                     <th class="p-4 font-semibold">Kategori</th>
                     <th class="p-4 font-semibold">Nama Produk</th>
+                    <th class="p-4 font-semibold">Variant</th>
                     <th class="p-4 font-semibold">Harga</th>
                     <th class="p-4 font-semibold hidden md:table-cell">Keterangan</th>
                     <th class="p-4 font-semibold text-center">Aksi</th>
@@ -60,7 +61,26 @@
                     
                     <!-- Kolom Nama -->
                     <td class="p-4 font-medium text-gray-800">{{ $product->name }}</td>
-                    
+
+                    <!-- Kolom Variant -->
+                    <td class="p-4 font-medium text-gray-800">
+                        @if($product->variantTypes->isNotEmpty())
+                            @foreach($product->variantTypes as $type)
+                            @foreach($type->variants as $variant)
+                            @if($variant->is_active)
+                                <span class="bg-green-100 text-green-800 px-2.5 py-1 rounded-full text-xs font-medium border border-green-200">
+                                    {{ $variant->name }}
+                                </span>
+                            @endif
+                            @endforeach
+                            @endforeach
+                        @else
+                            <span class="bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-200">
+                                Tidak ada varian
+                            </span>
+                        @endif
+                    </td>
+
                     <!-- Kolom Harga -->
                     <td class="p-4 text-gray-600">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
                     
