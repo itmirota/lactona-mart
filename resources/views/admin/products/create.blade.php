@@ -33,7 +33,7 @@
                 <!-- Field Kategori Produk -->
                 <div class="md:col-span-2">
                     <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Kategori Produk <span class="text-red-500">*</span></label>
-                    <select name="category_id" id="category_id" required 
+                    <select name="category_id" id="category_id" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-brand-dark focus:border-brand-dark outline-none transition-colors">
                         <option value="" disabled selected>-- Pilih Kategori --</option>
                         
@@ -49,7 +49,7 @@
                 <!-- Field Nama Produk -->
                 <div class="md:col-span-2">
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Produk <span class="text-red-500">*</span></label>
-                    <input type="text" name="name" id="name" value="{{ old('name') }}" required 
+                    <input type="text" name="name" id="name" value="{{ old('name') }}" required
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-brand-dark focus:border-brand-dark outline-none transition-colors"
                            placeholder="Contoh: Lactona Ibu Rasa Cokelat">
                 </div>

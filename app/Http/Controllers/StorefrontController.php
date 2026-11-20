@@ -9,7 +9,7 @@ class StorefrontController extends Controller
 {
     public function home(): View
     {
-        $products = Product::with('category')
+        $products = Product::with(['category', 'currentDiscounts'])
             ->latest()
             ->take(4)
             ->get();
@@ -19,7 +19,7 @@ class StorefrontController extends Controller
 
     public function products(): View
     {
-        $products = Product::with('category')
+        $products = Product::with(['category', 'currentDiscounts'])
             ->latest()
             ->paginate(12);
 
@@ -29,9 +29,13 @@ class StorefrontController extends Controller
     public function detail(?Product $product = null): View
     {
         if (! $product || ! $product->exists) {
-            $product = Product::with('category')->first();
+            $product = Product::with(['category', 'currentDiscounts'])->first();
+        } else {
+            $product->loadMissing('currentDiscounts');
         }
 
-        return view('detail', compact('product'));
+        $nutritionFactSections = Product::nutritionFactSections();
+
+        return view('detail', compact('nutritionFactSections', 'product'));
     }
 }
