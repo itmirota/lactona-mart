@@ -4,20 +4,20 @@
 @section('page-heading', 'Tambah Produk')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
+<div class="mx-auto max-w-4xl">
+    <div class="mb-6 flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-800">Tambah Produk Baru</h1>
-        <a href="{{ route('admin.products.index') }}" class="text-gray-600 hover:text-brand-dark flex items-center">
-            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <a href="{{ route('admin.products.index') }}" class="flex items-center text-gray-600 hover:text-brand-dark">
+            <svg class="mr-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0 7-7m-7 7h18"/>
+            </svg>
             Kembali
         </a>
     </div>
 
-    <!-- Menampilkan pesan error validasi jika ada -->
     @if ($errors->any())
-        <div class="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
-            <p class="mb-2 font-semibold">Periksa kembali data berikut:</p>
-            <ul class="list-disc list-inside text-sm">
+        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            <ul class="list-inside list-disc text-sm">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -25,337 +25,77 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <!-- Form Create -->
-        <!-- Pastikan menambahkan enctype="multipart/form-data" karena ada upload gambar -->
+    <div class="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
         <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="p-8">
-            @csrf <!-- CSRF Token Laravel (Wajib) -->
+            @csrf
 
-            <!-- inpo langkah -->
-            <div class="mb-8 flex items-center gap-3">
-                <div id="step-indicator-1"
-                     class="flex items-center gap-2 font-semibold text-brand-dark">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-dark text-white">1</span>
-                    <span>Data Produk</span>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div class="md:col-span-2">
+                    <label for="category_id" class="mb-1 block text-sm font-medium text-gray-700">Kategori Produk <span class="text-red-500">*</span></label>
+                    <select name="category_id" id="category_id" required class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
+                        <option value="">-- Pilih Kategori --</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
-                <div class="h-px flex-1 bg-gray-200"></div>
+                <div class="md:col-span-2">
+                    <label for="name" class="mb-1 block text-sm font-medium text-gray-700">Nama Produk <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" id="name" value="{{ old('name') }}" required placeholder="Contoh: Lactona Ibu Rasa Cokelat" class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
+                </div>
 
-                <div id="step-indicator-2"
-                     class="flex items-center gap-2 text-gray-400">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">2</span>
-                    <span>Nutrition Facts</span>
+                <div class="md:col-span-2">
+                    <label for="price" class="mb-1 block text-sm font-medium text-gray-700">Harga (Rp) <span class="text-red-500">*</span></label>
+                    <input type="number" name="price" id="price" value="{{ old('price') }}" required min="0" placeholder="Contoh: 59000" class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="description" class="mb-1 block text-sm font-medium text-gray-700">Keterangan / Deskripsi</label>
+                    <textarea name="description" id="description" rows="4" placeholder="Deskripsi singkat produk..." class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">{{ old('description') }}</textarea>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="image" class="mb-1 block text-sm font-medium text-gray-700">Gambar Produk</label>
+                    <div class="mt-1 flex cursor-pointer justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 pb-6 pt-5 transition-colors hover:border-brand-dark" onclick="document.getElementById('image').click()">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <div class="flex justify-center text-sm text-gray-600">
+                                <label for="image" class="cursor-pointer rounded-md bg-white font-medium text-brand-dark hover:text-brand-accent">
+                                    <span>Upload file</span>
+                                    <input id="image" name="image" type="file" class="sr-only" accept="image/png,image/jpeg,image/webp" onchange="updateFileName(this)">
+                                </label>
+                                <p class="pl-1">atau drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500" id="file-name-display">PNG, JPG, WEBP maks. 2 MB</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- DATA PRODUK -->
-            <section id="product-step">
-                <h2 class="mb-1 text-lg font-semibold text-gray-800">Informasi Produk</h2>
-                <p class="mb-6 text-sm text-gray-500">
-                    Lengkapi informasi utama produk sebelum melanjutkan.
-                </p>
+            @include('admin.products.partials.variant-fields')
 
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div class="md:col-span-2">
-                        <label for="category_id" class="mb-1 block text-sm font-medium text-gray-700">
-                            Kategori Produk <span class="text-red-500">*</span>
-                        </label>
-                        <select name="category_id" id="category_id" required
-                                class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-dark focus:ring-brand-dark">
-                            <option value="">-- Pilih Kategori --</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}"
-                                    {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label for="name" class="mb-1 block text-sm font-medium text-gray-700">
-                            Nama Produk <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" name="name" id="name"
-                               value="{{ old('name') }}" required
-                               placeholder="Contoh: Lactona Ibu Rasa Cokelat"
-                               class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-dark focus:ring-brand-dark">
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label for="price" class="mb-1 block text-sm font-medium text-gray-700">
-                            Harga (Rp) <span class="text-red-500">*</span>
-                        </label>
-                        <input type="number" name="price" id="price"
-                               value="{{ old('price') }}" required min="0"
-                               placeholder="Contoh: 59000"
-                               class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-dark focus:ring-brand-dark">
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label for="description" class="mb-1 block text-sm font-medium text-gray-700">
-                            Keterangan / Deskripsi
-                        </label>
-                        <textarea name="description" id="description" rows="4"
-                                  placeholder="Deskripsi singkat produk..."
-                                  class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-brand-dark focus:ring-brand-dark">{{ old('description') }}</textarea>
-                    </div>
-
-                    <!-- Upload gambar -->
-                    <div class="md:col-span-2">
-                        <label class="mb-2 block text-sm font-medium text-gray-700">
-                            Gambar Produk
-                        </label>
-
-                        <div id="drop-zone"
-                             class="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 px-6 py-8 text-center transition hover:border-brand-dark hover:bg-blue-50">
-                            <input id="image" name="image" type="file"
-                                   accept="image/png,image/jpeg,image/jpg,image/webp"
-                                   class="sr-only">
-
-                            <svg class="mx-auto mb-3 h-12 w-12 text-gray-400"
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      stroke-width="1.5"
-                                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 7.5L12 3m0 0L7.5 7.5M12 3v13.5"/>
-                            </svg>
-
-                            <p class="text-sm text-gray-600">Seret dan jatuhkan gambar ke sini</p>
-                            <p class="my-2 text-xs text-gray-400">atau</p>
-
-                            <label for="image"
-                                   class="inline-flex cursor-pointer rounded-lg bg-brand-dark px-4 py-2 text-sm font-medium text-white hover:bg-brand-accent">
-                                Upload File
-                            </label>
-
-                            <p class="mt-3 text-xs text-gray-500">
-                                PNG, JPG, JPEG, WEBP. Maksimal 2 MB.
-                            </p>
-                            <p id="file-name-display" class="mt-2 hidden text-sm font-medium text-brand-dark"></p>
-                        </div>
-
-                        <div id="image-preview-container" class="mt-4 hidden">
-                            <p class="mb-2 text-sm font-medium text-gray-700">Preview Gambar:</p>
-                            <img id="image-preview" src="" alt="Preview gambar produk"
-                                 class="h-36 w-36 rounded-lg border border-gray-200 bg-white object-contain p-2">
-                            <button type="button" id="remove-image"
-                                    class="mt-2 block text-sm font-medium text-red-600 hover:text-red-800">
-                                Hapus gambar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pengaturan Varian Produk -->
-                @include('admin.products.partials.variant-fields')
-
-                <div class="mt-8 flex justify-end gap-3">
-                    <a href="{{ route('admin.products.index') }}"
-                       class="rounded-lg border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50">
-                        Batal
-                    </a>
-                    <button type="button" id="next-step"
-                            class="rounded-lg bg-brand-dark px-8 py-2 font-medium text-white hover:bg-brand-accent">
-                        Selanjutnya
-                    </button>
-                </div>
-            </section>
-
-            <!-- NUTRITION FACTS -->
-            <section id="nutrition-step" class="hidden">
-                <div class="mb-6 flex flex-col gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h2 class="font-semibold text-gray-800">Nutrition Facts</h2>
-                        <p class="mt-1 text-sm text-gray-500">
-                            Pengisian informasi nilai gizi bersifat opsional.
-                        </p>
-                    </div>
-
-                    <label class="inline-flex cursor-pointer items-center gap-3">
-                        <span id="nutrition-toggle-label" class="text-sm font-semibold text-gray-600">OFF</span>
-                        <input type="checkbox" id="nutrition-toggle"
-                               name="nutrition_facts_enabled" value="1"
-                               class="peer sr-only"
-                               {{ old('nutrition_facts_enabled') ? 'checked' : '' }}>
-                        <span class="relative h-6 w-11 rounded-full bg-gray-300 transition peer-checked:bg-brand-dark
-                                     after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all
-                                     peer-checked:after:translate-x-5"></span>
-                    </label>
-                </div>
-
-                <fieldset id="nutrition-fields-wrapper"
-                          class="space-y-6 {{ old('nutrition_facts_enabled') ? '' : 'opacity-50' }}"
-                          {{ old('nutrition_facts_enabled') ? '' : 'disabled' }}>
-                    @include('admin.products.nutrition-fields')
-                </fieldset>
-
-                <div class="mt-8 flex flex-col-reverse justify-between gap-3 sm:flex-row">
-                    <button type="button" id="previous-step"
-                            class="rounded-lg border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50">
-                        Kembali
-                    </button>
-
-                    <button type="submit"
-                            class="rounded-lg bg-brand-dark px-8 py-2 font-medium text-white hover:bg-brand-accent">
-                        Simpan Produk
-                    </button>
-                </div>
-            </section>
+            <div class="mt-8 flex justify-end gap-3">
+                <a href="{{ route('admin.products.index') }}" class="rounded-lg border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50">Batal</a>
+                <button type="submit" class="rounded-lg bg-brand-dark px-8 py-2 font-medium text-white hover:bg-brand-accent">Simpan Produk</button>
+            </div>
         </form>
     </div>
 </div>
 
-<div
-    id="nutrition-validation-state"
-    data-has-errors="{{ collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'nutrition_facts')) ? '1' : '0' }}"
-    hidden>
-</div>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const productStep = document.getElementById('product-step');
-    const nutritionStep = document.getElementById('nutrition-step');
-    const nextButton = document.getElementById('next-step');
-    const previousButton = document.getElementById('previous-step');
+    function updateFileName(input) {
+        const fileNameDisplay = document.getElementById('file-name-display');
 
-    const indicator1 = document.getElementById('step-indicator-1');
-    const indicator2 = document.getElementById('step-indicator-2');
-
-    function showStep(step) {
-        const isProductStep = step === 1;
-
-        productStep.classList.toggle('hidden', !isProductStep);
-        nutritionStep.classList.toggle('hidden', isProductStep);
-
-        indicator1.classList.toggle('text-brand-dark', isProductStep);
-        indicator1.classList.toggle('text-gray-400', !isProductStep);
-        indicator2.classList.toggle('text-brand-dark', !isProductStep);
-        indicator2.classList.toggle('text-gray-400', isProductStep);
-
-        indicator1.querySelector('span').classList.toggle('bg-brand-dark', isProductStep);
-        indicator1.querySelector('span').classList.toggle('text-white', isProductStep);
-        indicator1.querySelector('span').classList.toggle('bg-gray-200', !isProductStep);
-
-        indicator2.querySelector('span').classList.toggle('bg-brand-dark', !isProductStep);
-        indicator2.querySelector('span').classList.toggle('text-white', !isProductStep);
-        indicator2.querySelector('span').classList.toggle('bg-gray-200', isProductStep);
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    nextButton.addEventListener('click', function () {
-        const requiredFields = productStep.querySelectorAll('[required]');
-        for (const field of requiredFields) {
-            if (!field.checkValidity()) {
-                field.reportValidity();
-                return;
-            }
+        if (input.files && input.files[0]) {
+            fileNameDisplay.textContent = 'File terpilih: ' + input.files[0].name;
+            fileNameDisplay.classList.add('font-semibold', 'text-brand-dark');
+        } else {
+            fileNameDisplay.textContent = 'PNG, JPG, WEBP maks. 2 MB';
+            fileNameDisplay.classList.remove('font-semibold', 'text-brand-dark');
         }
-        showStep(2);
-    });
-
-    previousButton.addEventListener('click', () => showStep(1));
-
-    // Toggle Nutrition Facts
-    const toggle = document.getElementById('nutrition-toggle');
-    const toggleLabel = document.getElementById('nutrition-toggle-label');
-    const nutritionWrapper = document.getElementById('nutrition-fields-wrapper');
-
-    function syncNutritionToggle() {
-        const enabled = toggle.checked;
-
-        toggleLabel.textContent = enabled ? 'ON' : 'OFF';
-        toggleLabel.classList.toggle('text-brand-dark', enabled);
-        toggleLabel.classList.toggle('text-gray-600', !enabled);
-
-        nutritionWrapper.classList.toggle('opacity-50', !enabled);
-        nutritionWrapper.disabled = !enabled;
     }
-
-    toggle.addEventListener('change', syncNutritionToggle);
-    syncNutritionToggle();
-
-    // Jika validasi Nutrition Facts gagal, buka kembali langkah kedua.
-    const validationState = document.getElementById('nutrition-validation-state');
-
-    if (validationState && validationState.dataset.hasErrors === '1') {
-        showStep(2);
-    }
-
-    // Upload, drag & drop, dan preview gambar
-    const dropZone = document.getElementById('drop-zone');
-    const imageInput = document.getElementById('image');
-    const fileNameDisplay = document.getElementById('file-name-display');
-    const previewContainer = document.getElementById('image-preview-container');
-    const imagePreview = document.getElementById('image-preview');
-    const removeButton = document.getElementById('remove-image');
-    let previewUrl = null;
-
-    function clearPreview() {
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        previewUrl = null;
-        imagePreview.src = '';
-        previewContainer.classList.add('hidden');
-    }
-
-    function processFile(file) {
-        if (!file) return;
-
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-            alert('Format gambar harus PNG, JPG, JPEG, atau WEBP.');
-            imageInput.value = '';
-            return;
-        }
-
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Ukuran gambar maksimal 2 MB.');
-            imageInput.value = '';
-            return;
-        }
-
-        const transfer = new DataTransfer();
-        transfer.items.add(file);
-        imageInput.files = transfer.files;
-
-        clearPreview();
-        previewUrl = URL.createObjectURL(file);
-        imagePreview.src = previewUrl;
-        previewContainer.classList.remove('hidden');
-        fileNameDisplay.textContent = 'File terpilih: ' + file.name;
-        fileNameDisplay.classList.remove('hidden');
-    }
-
-    imageInput.addEventListener('change', () => processFile(imageInput.files[0]));
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, event => {
-            event.preventDefault();
-            event.stopPropagation();
-        });
-    });
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.classList.add('border-brand-dark', 'bg-blue-50');
-        });
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.classList.remove('border-brand-dark', 'bg-blue-50');
-        });
-    });
-
-    dropZone.addEventListener('drop', event => {
-        processFile(event.dataTransfer.files[0]);
-    });
-
-    removeButton.addEventListener('click', () => {
-        imageInput.value = '';
-        clearPreview();
-        fileNameDisplay.textContent = '';
-        fileNameDisplay.classList.add('hidden');
-    });
-});
 </script>
 @endsection

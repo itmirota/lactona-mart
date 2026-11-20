@@ -58,14 +58,26 @@
                     </h4>
 
                     {{-- Harga --}}
-                    <p class="text-lg font-bold text-gray-900 mb-4">
-                        Rp. {{ number_format($product->price, 0, ',', '.') }}
-                    </p>
+                    <div class="mb-4 min-h-12">
+                        @if ($product->currentDiscount)
+                            <span class="mb-1 inline-flex rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">
+                                {{ $product->currentDiscount->promotion_name }}
+                            </span>
+                            <div class="flex flex-wrap items-baseline gap-x-2">
+                                <span class="text-xs font-medium text-gray-400 line-through">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                <span class="text-lg font-bold text-rose-700">Rp {{ number_format($product->discounted_price, 0, ',', '.') }}</span>
+                            </div>
+                        @else
+                            <p class="text-lg font-bold text-gray-900">
+                                Rp. {{ number_format($product->price, 0, ',', '.') }}
+                            </p>
+                        @endif
+                    </div>
 
                     {{-- Detail Produk --}}
                     <div class="flex space-x-2">
                         <a
-                            href="{{ url('/detail') }}"
+                            href="{{ route('products.detail', $product) }}"
                             class="text-center flex-1 bg-brand-dark hover:bg-brand-teal text-white text-xs font-bold py-2.5 rounded transition-colors uppercase tracking-wide"
                         >
                             Lihat Detail &gt;

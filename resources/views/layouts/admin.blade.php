@@ -84,6 +84,18 @@
                         </a>
 
                         <a
+                            href="{{ route('admin.discounts.index') }}"
+                            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition
+                            {{ request()->routeIs('admin.discounts.*') ? 'bg-brand-light text-brand-dark' : 'text-slate-600 hover:bg-slate-50 hover:text-brand-dark' }}"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="m12 3 2.25 5.25L20 10.5l-5.75 2.25L12 18l-2.25-5.25L4 10.5l5.75-2.25L12 3Zm6.5 12.5.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1Z"/>
+                            </svg>
+                            Diskon
+                        </a>
+
+                        <a
                             href="{{ route('admin.categoryProducts.index') }}"
                             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition
                             {{ request()->routeIs('admin.categoryProducts.*') ? 'bg-brand-light text-brand-dark' : 'text-slate-600 hover:bg-slate-50 hover:text-brand-dark' }}"
