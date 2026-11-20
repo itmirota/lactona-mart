@@ -75,5 +75,7 @@ class DatabaseSeeder extends Seeder
                 'image' => 'produk/Lactona Skim.png',
             ]
         );
+
+        $this->call(ProductDiscountSeeder::class);
     }
 }

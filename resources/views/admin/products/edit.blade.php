@@ -2,20 +2,22 @@
 
 @section('title', 'Edit Produk')
 @section('page-heading', 'Edit Produk')
+
 @section('content')
-<div class="max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
+<div class="mx-auto max-w-4xl">
+    <div class="mb-6 flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-800">Edit Produk: {{ $product->name }}</h1>
-        <a href="{{ route('admin.products.index') }}" class="text-gray-600 hover:text-brand-dark flex items-center">
-            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <a href="{{ route('admin.products.index') }}" class="flex items-center text-gray-600 hover:text-brand-dark">
+            <svg class="mr-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0 7-7m-7 7h18"/>
+            </svg>
             Kembali
         </a>
     </div>
 
-    <!-- Menampilkan pesan error validasi jika ada -->
     @if ($errors->any())
-        <div class="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
-            <ul class="list-disc list-inside text-sm">
+        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            <ul class="list-inside list-disc text-sm">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -23,101 +25,84 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <!-- Form Edit -->
-        <!-- Jangan lupa menambahkan enctype="multipart/form-data" jika ada upload gambar -->
+    <div class="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
         <form action="{{ route('admin.products.update', $product->id) }}" method="POST" enctype="multipart/form-data" class="p-8">
-            @csrf <!-- CSRF Token Laravel (Wajib) -->
-            @method('PUT') <!-- Method Spoofing untuk mengubah POST menjadi PUT sesuai standar rute resource -->
+            @csrf
+            @method('PUT')
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Field Kategori Produk -->
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div class="md:col-span-2">
-                    <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Kategori Produk <span class="text-red-500">*</span></label>
-                    <select name="category_id" id="category_id" required 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-brand-dark focus:border-brand-dark outline-none transition-colors">
-                        <option value="" disabled>-- Pilih Kategori --</option>
-                        
-                        <!-- Melakukan perulangan untuk menampilkan semua nama kategori -->
-                        @foreach($categories as $category)
-                            <!-- Memilih opsi jika cocok dengan category_id produk atau dengan input lama (old) -->
-                            <option value="{{ $category->id }}" {{ (old('category_id', $product->category_id) == $category->id) ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
+                    <label for="category_id" class="mb-1 block text-sm font-medium text-gray-700">Kategori Produk <span class="text-red-500">*</span></label>
+                    <select name="category_id" id="category_id" required class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
+                        <option value="">-- Pilih Kategori --</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" @selected(old('category_id', $product->category_id) == $category->id)>{{ $category->name }}</option>
                         @endforeach
                     </select>
                 </div>
-            
-                <!-- Field Nama Produk -->
+
                 <div class="md:col-span-2">
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Produk <span class="text-red-500">*</span></label>
-                    <input type="text" name="name" id="name" value="{{ old('name', $product->name) }}" required 
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-brand-dark focus:border-brand-dark outline-none transition-colors">
+                    <label for="name" class="mb-1 block text-sm font-medium text-gray-700">Nama Produk <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" id="name" value="{{ old('name', $product->name) }}" required class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
                 </div>
 
-                <!-- Field Harga -->
                 <div class="md:col-span-2">
-                    <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Harga (Rp) <span class="text-red-500">*</span></label>
-                    <input type="number" name="price" id="price" value="{{ old('price', $product->price) }}" required min="0"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-brand-dark focus:border-brand-dark outline-none transition-colors">
+                    <label for="price" class="mb-1 block text-sm font-medium text-gray-700">Harga (Rp) <span class="text-red-500">*</span></label>
+                    <input type="number" name="price" id="price" value="{{ old('price', $product->price) }}" required min="0" class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
                 </div>
 
-                <!-- Field Keterangan / Deskripsi -->
                 <div class="md:col-span-2">
-                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Keterangan / Deskripsi</label>
-                    <textarea name="description" id="description" rows="4" 
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-brand-dark focus:border-brand-dark outline-none transition-colors">{{ old('description', $product->description) }}</textarea>
+                    <label for="description" class="mb-1 block text-sm font-medium text-gray-700">Keterangan / Deskripsi</label>
+                    <textarea name="description" id="description" rows="4" class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">{{ old('description', $product->description) }}</textarea>
                 </div>
 
-                <!-- Field Gambar Produk -->
                 <div class="md:col-span-2">
-                    <label for="image" class="block text-sm font-medium text-gray-700 mb-1">Ganti Gambar Produk (Opsional)</label>
-                    
-                    <!-- Menampilkan Gambar Saat Ini Jika Ada -->
-                    @if($product->image)
+                    <label for="image" class="mb-1 block text-sm font-medium text-gray-700">Ganti Gambar Produk (Opsional)</label>
+                    @if ($product->image)
                         <div class="mb-4">
-                            <p class="text-sm text-gray-500 mb-2">Gambar saat ini:</p>
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="Preview" class="h-32 w-auto object-cover rounded-md border border-gray-200">
+                            <p class="mb-2 text-sm text-gray-500">Gambar saat ini:</p>
+                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="h-32 w-auto rounded-md border border-gray-200 object-contain">
                         </div>
                     @endif
 
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-brand-dark transition-colors cursor-pointer" id="drop-zone" onclick="document.getElementById('image').click()">
+                    <div class="mt-1 flex cursor-pointer justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 pb-6 pt-5 transition-colors hover:border-brand-dark" onclick="document.getElementById('image').click()">
                         <div class="space-y-1 text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            <div class="flex text-sm text-gray-600 justify-center">
-                                <span class="relative cursor-pointer bg-white rounded-md font-medium text-brand-dark hover:text-brand-accent focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-dark">
+                            <div class="flex justify-center text-sm text-gray-600">
+                                <label for="image" class="cursor-pointer rounded-md bg-white font-medium text-brand-dark hover:text-brand-accent">
                                     <span>Upload file baru</span>
-                                    <input id="image" name="image" type="file" class="sr-only" accept="image/png, image/jpeg, image/jpg, image/webp" onchange="updateFileName(this)">
-                                </span>
+                                    <input id="image" name="image" type="file" class="sr-only" accept="image/png,image/jpeg,image/webp" onchange="updateFileName(this)">
+                                </label>
                                 <p class="pl-1">atau drag and drop</p>
                             </div>
-                            <p class="text-xs text-gray-500" id="file-name-display">PNG, JPG, WEBP max 2MB (Biarkan kosong jika tidak ingin mengubah gambar)</p>
+                            <p class="text-xs text-gray-500" id="file-name-display">PNG, JPG, WEBP maks. 2 MB. Kosongkan jika tidak ingin mengganti gambar.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tombol Aksi -->
-            <div class="mt-8 flex justify-end">
-                <a href="{{ route('admin.products.index') }}" class="bg-white border border-gray-300 text-gray-700 font-medium py-2 px-6 rounded-lg mr-3 hover:bg-gray-50 transition-colors">Batal</a>
-                <button type="submit" class="bg-brand-dark hover:bg-brand-accent text-white font-medium py-2 px-8 rounded-lg transition-colors">Simpan Perubahan</button>
+            @include('admin.products.partials.variant-fields')
+
+            <div class="mt-8 flex justify-end gap-3">
+                <a href="{{ route('admin.products.index') }}" class="rounded-lg border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50">Batal</a>
+                <button type="submit" class="rounded-lg bg-brand-dark px-8 py-2 font-medium text-white hover:bg-brand-accent">Simpan Perubahan</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Script sederhana untuk menampilkan nama file gambar yang dipilih -->
 <script>
     function updateFileName(input) {
         const fileNameDisplay = document.getElementById('file-name-display');
+
         if (input.files && input.files[0]) {
-            fileNameDisplay.textContent = "File baru terpilih: " + input.files[0].name;
-            fileNameDisplay.classList.add('text-brand-dark', 'font-semibold');
+            fileNameDisplay.textContent = 'File baru terpilih: ' + input.files[0].name;
+            fileNameDisplay.classList.add('font-semibold', 'text-brand-dark');
         } else {
-            fileNameDisplay.textContent = "PNG, JPG, WEBP max 2MB (Biarkan kosong jika tidak ingin mengubah gambar)";
-            fileNameDisplay.classList.remove('text-brand-dark', 'font-semibold');
+            fileNameDisplay.textContent = 'PNG, JPG, WEBP maks. 2 MB. Kosongkan jika tidak ingin mengganti gambar.';
+            fileNameDisplay.classList.remove('font-semibold', 'text-brand-dark');
         }
     }
 </script>

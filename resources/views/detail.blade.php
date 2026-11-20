@@ -112,7 +112,7 @@
             </div>
 
             <!-- Title & Rating -->
-            <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-2 leading-tight">Lactona Ibu</h1>
+            <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-2 leading-tight">{{ $product?->name ?? 'Lactona Ibu' }}</h1>
             
             <!-- <div class="flex items-center space-x-2 mb-6">
                 <div class="flex text-black text-sm">
@@ -123,14 +123,25 @@
             </div> -->
 
             <!-- Price -->
-            <div class="flex items-end space-x-4 mb-6">
-                <span class="text-3xl font-bold text-gray-900">Rp. 59.99</span>
-                <span class="text-lg text-gray-400 line-through mb-1">Rp. 89.99</span>
-                <!-- <span class="bg-black text-white text-xs font-bold px-2 py-1 rounded mb-1.5">33% OFF</span> -->
+            <div class="mb-6">
+                @if ($product?->currentDiscount)
+                    <span class="mb-2 inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700">
+                        {{ $product->currentDiscount->promotion_name }}
+                    </span>
+                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span class="text-base font-medium text-gray-400 line-through">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                        <span class="text-3xl font-bold text-rose-700">Rp {{ number_format($product->discounted_price, 0, ',', '.') }}</span>
+                    </div>
+                    @if ($product->currentDiscount->description)
+                        <p class="mt-2 max-w-xl text-sm leading-relaxed text-gray-500">{{ $product->currentDiscount->description }}</p>
+                    @endif
+                @else
+                    <span class="text-3xl font-bold text-gray-900">Rp {{ number_format($product?->price ?? 0, 0, ',', '.') }}</span>
+                @endif
             </div>
 
             <p class="text-gray-600 text-sm leading-relaxed mb-8">
-                susu yang diformulasikan khusus untuk bantu penuhi kebutuhan nutrisi ibu yang meningkat selama masa kehamilan.
+                {{ $product?->description ?? 'Deskripsi produk belum tersedia.' }}
             </p>
 
             <!-- Color Selection -->
@@ -232,7 +243,7 @@
                 <button @click="activeTab = 'nutrision'"
                     :class="activeTab === 'nutrision' ? 'border-b-2 border-black font-semibold text-gray-900' : 'border-b-2 border-transparent text-gray-500 hover:text-black font-medium'"
                     class="pb-2 text-sm transition-colors">
-                    Nutrision Fact
+                    Nutrition Facts
                 </button>
             </div>
 
@@ -259,280 +270,59 @@
                 </ul>
             </div>
 
-            <!-- Konten Tab 2: Nutrision Fact -->
-            <!-- x-show memastikan bagian ini hanya tampil jika activeTab adalah 'nutrision' -->
-            <div x-show="activeTab === 'nutrision'" 
-                x-transition.opacity.duration.300ms 
-                style="display: none;"> <!-- style="display: none;" mencegah kedipan awal -->
+            <!-- Nutrition Facts tab -->
+            <div x-show="activeTab === 'nutrision'" x-transition.opacity.duration.300ms style="display: none;">
                 <p class="text-gray-600 text-sm leading-relaxed mb-6">
-                    <!-- Masukkan teks Informasi Nilai Gizi di sini -->
-                    Berikut adalah detail informasi nilai gizi (Nutrition Facts) dari produk Lactona Ibu per takaran saji.
+                    Berikut adalah detail informasi nilai gizi (Nutrition Facts) dari produk {{ $product?->name ?? 'ini' }} per takaran saji.
                 </p>
-                <!-- Anda bisa menambahkan struktur tabel HTML atau daftar (list) untuk merinci kandungan gizinya di sini -->
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm text-gray-800 border-collapse border border-gray-200">
-                        <thead>
-                            <tr class="bg-gray-100 border-b border-gray-200">
-                                <th class="p-2 text-left border-r border-gray-200" rowspan="2">Komponen Gizi</th>
-                                <th class="p-2 text-center border-r border-gray-200" rowspan="2">Per Saji</th>
-                                <th class="p-2 text-center" colspan="2">% AKG</th>
-                            </tr>
-                            <tr class="bg-gray-50 border-b border-gray-200">
-                                <th class="p-2 text-center border-r border-gray-200">Hamil</th>
-                                <th class="p-2 text-center">Menyusui</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Takaran Saji</td>
-                                <td class="p-2 font-semibold" colspan="3">3 sendok makan penuh (40g)[cite: 1]</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Jumlah Sajian per Kemasan</td>
-                                <td class="p-2 font-semibold" colspan="3">± 5[cite: 1]</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Energi Total</td>
-                                <td class="p-2 font-semibold" colspan="3">170 kkal</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Energi dari Lemak</td>
-                                <td class="p-2 font-semibold" colspan="3">35 kkal</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Energi dari Lemak Jenuh</td>
-                                <td class="p-2 font-semibold" colspan="3">15 kkal</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Lemak Total</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">4 g</td>
-                                <td class="p-2 text-center border-r border-gray-200">5%</td>
-                                <td class="p-2 text-center">4%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Lemak Trans</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">0 g</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center">-</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Kolesterol</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">5 mg</td>
-                                <td class="p-2 text-center border-r border-gray-200">2%</td>
-                                <td class="p-2 text-center">2%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Lemak Jenuh</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">2 g</td>
-                                <td class="p-2 text-center border-r border-gray-200">9%</td>
-                                <td class="p-2 text-center">9%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Protein</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">8 g</td>
-                                <td class="p-2 text-center border-r border-gray-200">11%</td>
-                                <td class="p-2 text-center">11%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Karbohidrat Total</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">24 g</td>
-                                <td class="p-2 text-center border-r border-gray-200">7%</td>
-                                <td class="p-2 text-center">7%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Serat Pangan</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">3 g</td>
-                                <td class="p-2 text-center border-r border-gray-200">10%</td>
-                                <td class="p-2 text-center">9%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Serat Pangan Larut</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">2 g</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center">-</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Gula Total</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">18 g</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center">-</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Sukrosa</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">8 g</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center">-</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Natrium</td>
-                                <td class="p-2 text-center border-r border-gray-200 font-semibold">75 mg</td>
-                                <td class="p-2 text-center border-r border-gray-200">5%</td>
-                                <td class="p-2 text-center">5%</td>
-                            </tr>
-                            <!-- Vitamin dan Mineral -->
-                            <tr class="bg-gray-50 font-semibold">
-                                <td class="p-2 border-r border-gray-200" colspan="4">Vitamin dan Mineral</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin A</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">20%</td>
-                                <td class="p-2 text-center">20%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin D3</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">10%</td>
-                                <td class="p-2 text-center">10%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin E</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">25%</td>
-                                <td class="p-2 text-center">20%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin K</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">6%</td>
-                                <td class="p-2 text-center">6%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin B1</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">30%</td>
-                                <td class="p-2 text-center">30%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin B2</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">25%</td>
-                                <td class="p-2 text-center">25%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin B3</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">30%</td>
-                                <td class="p-2 text-center">30%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin B5</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">25%</td>
-                                <td class="p-2 text-center">20%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin B6</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">35%</td>
-                                <td class="p-2 text-center">35%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin B9</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">35%</td>
-                                <td class="p-2 text-center">40%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin B12</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">20%</td>
-                                <td class="p-2 text-center">20%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Vitamin C</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">35%</td>
-                                <td class="p-2 text-center">30%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Kolin</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">10%</td>
-                                <td class="p-2 text-center">10%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Biotin</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">80%</td>
-                                <td class="p-2 text-center">70%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Kalium</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">6%</td>
-                                <td class="p-2 text-center">6%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Kalsium</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">25%</td>
-                                <td class="p-2 text-center">25%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Fosfor</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">30%</td>
-                                <td class="p-2 text-center">30%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Magnesium</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">15%</td>
-                                <td class="p-2 text-center">20%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Zink</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">15%</td>
-                                <td class="p-2 text-center">15%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Zat Besi</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">35%</td>
-                                <td class="p-2 text-center">40%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Mangan</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">20%</td>
-                                <td class="p-2 text-center">15%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Iodium</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">30%</td>
-                                <td class="p-2 text-center">25%</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Selenium</td>
-                                <td class="p-2 text-center border-r border-gray-200">-</td>
-                                <td class="p-2 text-center border-r border-gray-200">35%</td>
-                                <td class="p-2 text-center">30%</td>
-                            </tr>
-                            <!-- Komponen Lain -->
-                            <tr class="bg-gray-50 font-semibold">
-                                <td class="p-2 border-r border-gray-200" colspan="4">Komponen Lain</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">DHA</td>
-                                <td class="p-2 font-semibold" colspan="3">11 mg</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Omega 3</td>
-                                <td class="p-2 font-semibold" colspan="3">55,8 mg</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2 border-r border-gray-200">Omega 6</td>
-                                <td class="p-2 font-semibold" colspan="3">629,4 mg</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+
+                @php($nutritionFacts = $product?->nutrition_facts ?? [])
+
+                @if (empty($nutritionFacts))
+                    <p class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                        Nutrition Facts belum diisi untuk produk ini.
+                    </p>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-gray-800 border-collapse border border-gray-200">
+                            <thead>
+                                <tr class="bg-gray-100 border-b border-gray-200">
+                                    <th class="p-2 text-left border-r border-gray-200" rowspan="2">Komponen Gizi</th>
+                                    <th class="p-2 text-center border-r border-gray-200" rowspan="2">Per Saji</th>
+                                    <th class="p-2 text-center" colspan="2">% AKG</th>
+                                </tr>
+                                <tr class="bg-gray-50 border-b border-gray-200">
+                                    <th class="p-2 text-center border-r border-gray-200">Hamil</th>
+                                    <th class="p-2 text-center">Menyusui</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach ($nutritionFactSections as $section)
+                                    @if ($section['show_heading'])
+                                        <tr class="bg-gray-50 font-semibold">
+                                            <td class="p-2 border-r border-gray-200" colspan="4">{{ $section['title'] }}</td>
+                                        </tr>
+                                    @endif
+
+                                    @foreach ($section['rows'] as $row)
+                                        <tr>
+                                            <td class="p-2 border-r border-gray-200">{{ $row['label'] }}</td>
+                                            @if ($row['single'])
+                                                <td class="p-2 font-semibold" colspan="3">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
+                                            @else
+                                                <td class="p-2 text-center border-r border-gray-200 font-semibold">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
+                                                <td class="p-2 text-center border-r border-gray-200">{{ data_get($nutritionFacts, $row['key'] . '.pregnancy') ?: '-' }}</td>
+                                                <td class="p-2 text-center">{{ data_get($nutritionFacts, $row['key'] . '.lactation') ?: '-' }}</td>
+                                            @endif
+                                        </tr>
+                                    @endforeach
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
         </div>
-
         <!-- Right: Detail Image -->
         <div class="h-64 md:rounded-lg overflow-hidden bg-gray-100 relative">
              <img src="{{ asset('produk/Lactona Ibu Cokelat.png') }}" class="w-full h-full object-cover" alt="Detail texture">
