@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(SuperadminUserSeeder::class);
+
         $catIbu = CategoryProduct::firstOrCreate(['name' => 'Susu Hamil & Menyusui']);
         $catAnak = CategoryProduct::firstOrCreate(['name' => 'Susu Pertumbuhan Anak']);
         $catDewasa = CategoryProduct::firstOrCreate(['name' => 'Susu Rendah Lemak & Dewasa']);

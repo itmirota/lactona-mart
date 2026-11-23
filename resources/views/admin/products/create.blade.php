@@ -26,28 +26,9 @@
     @endif
 
     <div class="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-        <form
-            action="{{ route('admin.products.store') }}"
-            method="POST"
-            enctype="multipart/form-data"
-            class="p-4 sm:p-6 lg:p-8"
-            data-product-wizard
-            data-start-step="{{ $errors->has('nutrition_facts') || collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'nutrition_facts.')) ? 2 : 1 }}"
-        >
+        <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8 p-4 sm:p-6 lg:p-8">
             @csrf
 
-            <ol class="mb-6 grid grid-cols-2 gap-3" aria-label="Langkah formulir produk">
-                <li data-step-indicator="1" class="flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-3 text-sm font-medium text-gray-500 sm:gap-3 sm:px-4">
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold">1</span>
-                    <span>Informasi Produk</span>
-                </li>
-                <li data-step-indicator="2" class="flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-3 text-sm font-medium text-gray-500 sm:gap-3 sm:px-4">
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold">2</span>
-                    <span>Nutrition Facts</span>
-                </li>
-            </ol>
-
-            <section data-product-step="1" class="space-y-8">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div class="md:col-span-2">
                     <label for="category_id" class="mb-1 block text-sm font-medium text-gray-700">Kategori Produk <span class="text-red-500">*</span></label>
@@ -57,40 +38,32 @@
                             <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
                         @endforeach
                     </select>
+                    @error('category_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-2">
                     <label for="name" class="mb-1 block text-sm font-medium text-gray-700">Nama Produk <span class="text-red-500">*</span></label>
-                    <input type="text" name="name" id="name" value="{{ old('name') }}" required placeholder="Contoh: Lactona Ibu Rasa Cokelat" class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
+                    <input type="text" name="name" id="name" value="{{ old('name') }}" required maxlength="255" placeholder="Contoh: Lactona Ibu Rasa Cokelat" class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
+                    @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-2">
                     <label for="price" class="mb-1 block text-sm font-medium text-gray-700">Harga (Rp) <span class="text-red-500">*</span></label>
-                    <input type="number" name="price" id="price" value="{{ old('price') }}" required min="0" placeholder="Contoh: 59000" class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
+                    <input type="number" name="price" id="price" value="{{ old('price') }}" required min="0" step="0.01" placeholder="Contoh: 59000" class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">
+                    @error('price') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-2">
                     <label for="description" class="mb-1 block text-sm font-medium text-gray-700">Keterangan / Deskripsi</label>
                     <textarea name="description" id="description" rows="4" placeholder="Deskripsi singkat produk..." class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">{{ old('description') }}</textarea>
+                    @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-2">
                     <label for="image" class="mb-1 block text-sm font-medium text-gray-700">Gambar Produk</label>
-                    <div class="mt-1 flex cursor-pointer justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 pb-6 pt-5 transition-colors hover:border-brand-dark" onclick="document.getElementById('image').click()">
-                        <div class="space-y-1 text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <div class="flex justify-center text-sm text-gray-600">
-                                <label for="image" class="cursor-pointer rounded-md bg-white font-medium text-brand-dark hover:text-brand-accent">
-                                    <span>Upload file</span>
-                                    <input id="image" name="image" type="file" class="sr-only" accept="image/png,image/jpeg,image/webp" onchange="updateFileName(this)">
-                                </label>
-                                <p class="pl-1">atau drag and drop</p>
-                            </div>
-                            <p class="text-xs text-gray-500" id="file-name-display">PNG, JPG, WEBP maks. 2 MB</p>
-                        </div>
-                    </div>
+                    <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full rounded-lg border border-gray-300 text-sm text-gray-600 file:mr-4 file:rounded-l-lg file:border-0 file:bg-brand-light file:px-4 file:py-2 file:font-medium file:text-brand-dark" onchange="updateFileName(this)">
+                    <p class="mt-1 text-xs text-gray-500" id="file-name-display">PNG, JPG, WEBP maks. 2 MB</p>
+                    @error('image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
 
@@ -98,61 +71,19 @@
 
             <div class="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <a href="{{ route('admin.products.index') }}" class="rounded-lg border border-gray-300 px-6 py-2 text-center font-medium text-gray-700 hover:bg-gray-50">Batal</a>
-                <button type="button" data-step-next class="rounded-lg bg-brand-dark px-6 py-2 font-medium text-white hover:bg-brand-accent">
-                    Selanjutnya: Nutrition Facts
-                </button>
+                <button type="submit" class="rounded-lg bg-brand-dark px-6 py-2 font-medium text-white hover:bg-brand-accent">Simpan Produk</button>
             </div>
-            </section>
-
-            <section data-product-step="2" class="hidden space-y-6">
-                <div class="space-y-4 rounded-xl border border-gray-200 p-4 sm:p-5">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h2 class="font-semibold text-gray-800">Nutrition Facts</h2>
-                        <p class="mt-1 text-sm text-gray-500">Pengisian informasi nilai gizi bersifat opsional.</p>
-                    </div>
-                    <label class="inline-flex w-fit cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
-                        <input
-                            type="checkbox"
-                            name="nutrition_facts_enabled"
-                            value="1"
-                            @checked(old('nutrition_facts_enabled'))
-                        >
-                        Isi Nutrition Facts
-                    </label>
-                    </div>
-
-                    <fieldset
-                        id="nutrition-fields-wrapper"
-                        class="min-w-0 space-y-6 {{ old('nutrition_facts_enabled') ? '' : 'opacity-50' }}"
-                        {{ old('nutrition_facts_enabled') ? '' : 'disabled' }}
-                    >
-                        @include('admin.products.nutrition-fields')
-                    </fieldset>
-                </div>
-
-                <div class="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                    <button type="button" data-step-previous class="rounded-lg border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50">
-                        Kembali
-                    </button>
-                    <button type="submit" class="rounded-lg bg-brand-dark px-8 py-2 font-medium text-white hover:bg-brand-accent">Simpan Produk</button>
-                </div>
-            </section>
         </form>
     </div>
 </div>
 
 <script>
-    function updateFileName(input) {
-        const fileNameDisplay = document.getElementById('file-name-display');
+function updateFileName(input) {
+    const fileNameDisplay = document.getElementById('file-name-display');
 
-        if (input.files && input.files[0]) {
-            fileNameDisplay.textContent = 'File terpilih: ' + input.files[0].name;
-            fileNameDisplay.classList.add('font-semibold', 'text-brand-dark');
-        } else {
-            fileNameDisplay.textContent = 'PNG, JPG, WEBP maks. 2 MB';
-            fileNameDisplay.classList.remove('font-semibold', 'text-brand-dark');
-        }
+    if (fileNameDisplay) {
+        fileNameDisplay.textContent = input.files[0]?.name ?? 'PNG, JPG, WEBP maks. 2 MB';
     }
+}
 </script>
 @endsection
