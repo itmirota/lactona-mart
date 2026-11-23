@@ -4,8 +4,8 @@
 @section('page-heading', 'Tambah Produk')
 
 @section('content')
-<div class="mx-auto max-w-4xl">
-    <div class="mb-6 flex items-center justify-between">
+<div class="mx-auto max-w-6xl">
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 class="text-2xl font-bold text-gray-800">Tambah Produk Baru</h1>
         <a href="{{ route('admin.products.index') }}" class="flex items-center text-gray-600 hover:text-brand-dark">
             <svg class="mr-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -26,9 +26,28 @@
     @endif
 
     <div class="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-        <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="p-8">
+        <form
+            action="{{ route('admin.products.store') }}"
+            method="POST"
+            enctype="multipart/form-data"
+            class="p-4 sm:p-6 lg:p-8"
+            data-product-wizard
+            data-start-step="{{ $errors->has('nutrition_facts') || collect($errors->keys())->contains(fn ($key) => str_starts_with($key, 'nutrition_facts.')) ? 2 : 1 }}"
+        >
             @csrf
 
+            <ol class="mb-6 grid grid-cols-2 gap-3" aria-label="Langkah formulir produk">
+                <li data-step-indicator="1" class="flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-3 text-sm font-medium text-gray-500 sm:gap-3 sm:px-4">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold">1</span>
+                    <span>Informasi Produk</span>
+                </li>
+                <li data-step-indicator="2" class="flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 px-3 py-3 text-sm font-medium text-gray-500 sm:gap-3 sm:px-4">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-bold">2</span>
+                    <span>Nutrition Facts</span>
+                </li>
+            </ol>
+
+            <section data-product-step="1" class="space-y-8">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div class="md:col-span-2">
                     <label for="category_id" class="mb-1 block text-sm font-medium text-gray-700">Kategori Produk <span class="text-red-500">*</span></label>
@@ -77,10 +96,48 @@
 
             @include('admin.products.partials.variant-fields')
 
-            <div class="mt-8 flex justify-end gap-3">
-                <a href="{{ route('admin.products.index') }}" class="rounded-lg border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50">Batal</a>
-                <button type="submit" class="rounded-lg bg-brand-dark px-8 py-2 font-medium text-white hover:bg-brand-accent">Simpan Produk</button>
+            <div class="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <a href="{{ route('admin.products.index') }}" class="rounded-lg border border-gray-300 px-6 py-2 text-center font-medium text-gray-700 hover:bg-gray-50">Batal</a>
+                <button type="button" data-step-next class="rounded-lg bg-brand-dark px-6 py-2 font-medium text-white hover:bg-brand-accent">
+                    Selanjutnya: Nutrition Facts
+                </button>
             </div>
+            </section>
+
+            <section data-product-step="2" class="hidden space-y-6">
+                <div class="space-y-4 rounded-xl border border-gray-200 p-4 sm:p-5">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="font-semibold text-gray-800">Nutrition Facts</h2>
+                        <p class="mt-1 text-sm text-gray-500">Pengisian informasi nilai gizi bersifat opsional.</p>
+                    </div>
+                    <label class="inline-flex w-fit cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
+                        <input
+                            type="checkbox"
+                            name="nutrition_facts_enabled"
+                            value="1"
+                            @checked(old('nutrition_facts_enabled'))
+                        >
+                        Isi Nutrition Facts
+                    </label>
+                    </div>
+
+                    <fieldset
+                        id="nutrition-fields-wrapper"
+                        class="min-w-0 space-y-6 {{ old('nutrition_facts_enabled') ? '' : 'opacity-50' }}"
+                        {{ old('nutrition_facts_enabled') ? '' : 'disabled' }}
+                    >
+                        @include('admin.products.nutrition-fields')
+                    </fieldset>
+                </div>
+
+                <div class="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                    <button type="button" data-step-previous class="rounded-lg border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50">
+                        Kembali
+                    </button>
+                    <button type="submit" class="rounded-lg bg-brand-dark px-8 py-2 font-medium text-white hover:bg-brand-accent">Simpan Produk</button>
+                </div>
+            </section>
         </form>
     </div>
 </div>

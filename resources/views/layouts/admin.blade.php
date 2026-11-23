@@ -12,21 +12,18 @@
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
 
-    <div x-data="{ sidebarOpen: false }" class="min-h-screen">
+    <div class="min-h-screen">
 
         <!-- Mobile Overlay -->
         <div
-            x-show="sidebarOpen"
-            x-transition.opacity
-            @click="sidebarOpen = false"
-            class="fixed inset-0 z-40 bg-slate-950/40 md:hidden"
-            style="display: none;"
+            data-sidebar-overlay
+            class="fixed inset-0 z-40 hidden bg-slate-950/40 md:hidden"
         ></div>
 
         <!-- Sidebar -->
         <aside
-            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-            class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-300 md:translate-x-0"
+            id="admin-sidebar"
+            class="fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-300 md:translate-x-0"
         >
             <!-- Logo -->
             <div class="flex h-20 items-center gap-3 border-b border-slate-100 px-6">
@@ -129,7 +126,9 @@
                 <div class="flex items-center gap-3">
                     <button
                         type="button"
-                        @click="sidebarOpen = !sidebarOpen"
+                        data-sidebar-toggle
+                        aria-controls="admin-sidebar"
+                        aria-expanded="false"
                         class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden"
                         aria-label="Buka navigasi"
                     >

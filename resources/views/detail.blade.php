@@ -284,41 +284,80 @@
                     </p>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm text-gray-800 border-collapse border border-gray-200">
-                            <thead>
-                                <tr class="bg-gray-100 border-b border-gray-200">
-                                    <th class="p-2 text-left border-r border-gray-200" rowspan="2">Komponen Gizi</th>
-                                    <th class="p-2 text-center border-r border-gray-200" rowspan="2">Per Saji</th>
-                                    <th class="p-2 text-center" colspan="2">% AKG</th>
-                                </tr>
-                                <tr class="bg-gray-50 border-b border-gray-200">
-                                    <th class="p-2 text-center border-r border-gray-200">Hamil</th>
-                                    <th class="p-2 text-center">Menyusui</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @foreach ($nutritionFactSections as $section)
-                                    @if ($section['show_heading'])
-                                        <tr class="bg-gray-50 font-semibold">
-                                            <td class="p-2 border-r border-gray-200" colspan="4">{{ $section['title'] }}</td>
-                                        </tr>
-                                    @endif
+                        @if (isset($nutritionFacts['groups']))
+                            <div class="mb-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                                <p><span class="font-semibold">Takaran Saji:</span> {{ $nutritionFacts['serving_size'] ?? '-' }}</p>
+                                <p><span class="font-semibold">Jumlah Sajian per Kemasan:</span> {{ $nutritionFacts['servings_per_package'] ?? '-' }}</p>
+                            </div>
 
-                                    @foreach ($section['rows'] as $row)
-                                        <tr>
-                                            <td class="p-2 border-r border-gray-200">{{ $row['label'] }}</td>
-                                            @if ($row['single'])
-                                                <td class="p-2 font-semibold" colspan="3">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
-                                            @else
-                                                <td class="p-2 text-center border-r border-gray-200 font-semibold">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
-                                                <td class="p-2 text-center border-r border-gray-200">{{ data_get($nutritionFacts, $row['key'] . '.pregnancy') ?: '-' }}</td>
-                                                <td class="p-2 text-center">{{ data_get($nutritionFacts, $row['key'] . '.lactation') ?: '-' }}</td>
-                                            @endif
-                                        </tr>
-                                    @endforeach
+                            <div class="space-y-4">
+                                @foreach ($nutritionFacts['groups'] as $group)
+                                    @php($columns = $group['columns'] ?? $nutritionFacts['columns'] ?? [])
+                                    <table class="min-w-full border-collapse border border-gray-200 text-sm text-gray-800">
+                                        <thead>
+                                            <tr class="bg-gray-100">
+                                                <th class="border border-gray-200 p-2 text-left">{{ $group['title'] }}</th>
+                                                <th class="border border-gray-200 p-2 text-center">Per Saji</th>
+                                                @foreach ($columns as $column)
+                                                    <th class="border border-gray-200 p-2 text-center">{{ $column['label'] }}</th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            @foreach ($group['items'] as $item)
+                                                <tr>
+                                                    <td class="border border-gray-200 p-2">{{ $item['name'] }}</td>
+                                                    <td class="border border-gray-200 p-2 text-center font-semibold">
+                                                        {{ trim(($item['value'] ?? '') . ' ' . ($item['unit'] ?? '')) ?: '-' }}
+                                                    </td>
+                                                    @foreach ($columns as $columnIndex => $column)
+                                                        <td class="border border-gray-200 p-2 text-center">
+                                                            {{ $item['percentages'][$columnIndex] ?? '-' }}
+                                                        </td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 @endforeach
-                            </tbody>
-                        </table>
+                            </div>
+                        @else
+                            <table class="min-w-full border-collapse border border-gray-200 text-sm text-gray-800">
+                                <thead>
+                                    <tr class="border-b border-gray-200 bg-gray-100">
+                                        <th class="border-r border-gray-200 p-2 text-left" rowspan="2">Komponen Gizi</th>
+                                        <th class="border-r border-gray-200 p-2 text-center" rowspan="2">Per Saji</th>
+                                        <th class="p-2 text-center" colspan="2">% AKG</th>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 bg-gray-50">
+                                        <th class="border-r border-gray-200 p-2 text-center">Hamil</th>
+                                        <th class="p-2 text-center">Menyusui</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach ($nutritionFactSections as $section)
+                                        @if ($section['show_heading'])
+                                            <tr class="bg-gray-50 font-semibold">
+                                                <td class="border-r border-gray-200 p-2" colspan="4">{{ $section['title'] }}</td>
+                                            </tr>
+                                        @endif
+
+                                        @foreach ($section['rows'] as $row)
+                                            <tr>
+                                                <td class="border-r border-gray-200 p-2">{{ $row['label'] }}</td>
+                                                @if ($row['single'])
+                                                    <td class="p-2 font-semibold" colspan="3">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
+                                                @else
+                                                    <td class="border-r border-gray-200 p-2 text-center font-semibold">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
+                                                    <td class="border-r border-gray-200 p-2 text-center">{{ data_get($nutritionFacts, $row['key'] . '.pregnancy') ?: '-' }}</td>
+                                                    <td class="p-2 text-center">{{ data_get($nutritionFacts, $row['key'] . '.lactation') ?: '-' }}</td>
+                                                @endif
+                                            </tr>
+                                        @endforeach
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
                     </div>
                 @endif
             </div>
