@@ -12,6 +12,31 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
+    private function nutritionValidationRules(bool $enabled): array
+    {
+        if (! $enabled) {
+            return [];
+        }
+
+        return [
+            'nutrition_facts' => 'required|array',
+            'nutrition_facts.serving_size' => 'required|string|max:100',
+            'nutrition_facts.servings_per_package' => 'required|string|max:100',
+            'nutrition_facts.columns' => 'sometimes|array',
+            'nutrition_facts.columns.*.label' => 'required|string|max:100',
+            'nutrition_facts.groups' => 'required|array|min:1',
+            'nutrition_facts.groups.*.title' => 'required|string|max:100',
+            'nutrition_facts.groups.*.columns' => 'sometimes|array',
+            'nutrition_facts.groups.*.columns.*.label' => 'required|string|max:100',
+            'nutrition_facts.groups.*.items' => 'required|array|min:1',
+            'nutrition_facts.groups.*.items.*.name' => 'required|string|max:100',
+            'nutrition_facts.groups.*.items.*.unit' => 'nullable|string|max:30',
+            'nutrition_facts.groups.*.items.*.value' => 'required|string|max:50',
+            'nutrition_facts.groups.*.items.*.percentages' => 'sometimes|array',
+            'nutrition_facts.groups.*.items.*.percentages.*' => 'nullable|string|max:50',
+        ];
+    }
+
     private function variantValidationRules(): array
     {
         return [
@@ -151,6 +176,8 @@ class ProductController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $nutritionEnabled = $request->boolean('nutrition_facts_enabled');
+
         $validated = $request->validate(array_merge(
             [
                 'category_id' => 'required|exists:category_product,id',
@@ -159,8 +186,14 @@ class ProductController extends Controller
                 'description' => 'nullable|string',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             ],
+            $this->nutritionValidationRules($nutritionEnabled),
             $this->variantValidationRules()
         ));
+
+        if ($nutritionEnabled) {
+            $validated['nutrition_facts']['columns'] =
+                $validated['nutrition_facts']['columns'] ?? [];
+        }
 
         $imagePath = null;
 
@@ -174,6 +207,9 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'description' => $validated['description'] ?? null,
             'image' => $imagePath,
+            'nutrition_facts' => $nutritionEnabled
+                ? $validated['nutrition_facts']
+                : null,
         ]);
 
         if (! empty($validated['variant_types'])) {
@@ -206,6 +242,8 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product): RedirectResponse
     {
+        $nutritionEnabled = $request->boolean('nutrition_facts_enabled');
+
         $validated = $request->validate(array_merge(
             [
                 'category_id' => 'required|exists:category_product,id',
@@ -214,8 +252,14 @@ class ProductController extends Controller
                 'description' => 'nullable|string',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             ],
+            $this->nutritionValidationRules($nutritionEnabled),
             $this->variantValidationRules()
         ));
+
+        if ($nutritionEnabled) {
+            $validated['nutrition_facts']['columns'] =
+                $validated['nutrition_facts']['columns'] ?? [];
+        }
 
         $imagePath = $product->image;
 
@@ -233,6 +277,9 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'description' => $validated['description'] ?? null,
             'image' => $imagePath,
+            'nutrition_facts' => $nutritionEnabled
+                ? $validated['nutrition_facts']
+                : null,
         ]);
 
         if ($request->boolean('variant_types_present')) {

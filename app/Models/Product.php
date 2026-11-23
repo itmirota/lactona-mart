@@ -17,6 +17,7 @@ class Product extends Model
         'price',
         'description',
         'image',
+        'nutrition_facts',
     ];
 
     /**

@@ -12,9 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->json('nutrition_facts')->nullable();
-        });
+        if (! Schema::hasColumn('products', 'nutrition_facts')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->json('nutrition_facts')->nullable();
+            });
+        }
 
         $lactonaIbuNutritionFacts = [
             'takaran_saji' => ['per_serving' => '3 sendok makan penuh (40g)'],
