@@ -1,4 +1,3 @@
-
 @php
     $nutritionData = old(
         'nutrition_facts',

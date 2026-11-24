@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.storefront')
 
 @section('content')
     <!-- Bagian Hero -->

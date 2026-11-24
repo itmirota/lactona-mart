@@ -1,5 +1,4 @@
 @extends('layouts.admin')
-
 @section('title', 'Produk')
 @section('page-heading', 'Manajemen Produk')
 @section('content')

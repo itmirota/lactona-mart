@@ -42,12 +42,13 @@
             <!-- Navigation -->
             <nav class="flex-1 space-y-7 overflow-y-auto px-4 py-6">
 
-                <div>
-                    <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                        Menu Utama
-                    </p>
+                @can('dashboard.view')
+                    <div>
+                        <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            Menu Utama
+                        </p>
 
-                    <div class="space-y-1">
+                        <div class="space-y-1">
                         <a
                             href="{{ route('admin.dashboard') }}"
                             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition
@@ -59,15 +60,18 @@
                             </svg>
                             Dashboard
                         </a>
+                        </div>
                     </div>
-                </div>
+                @endcan
 
-                <div>
-                    <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                        Manajemen Katalog
-                    </p>
+                @canany(['products.manage', 'discounts.manage', 'categories.manage'])
+                    <div>
+                        <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            Manajemen Katalog
+                        </p>
 
-                    <div class="space-y-1">
+                        <div class="space-y-1">
+                        @can('products.manage')
                         <a
                             href="{{ route('admin.products.index') }}"
                             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition
@@ -79,7 +83,9 @@
                             </svg>
                             Produk
                         </a>
+                        @endcan
 
+                        @can('discounts.manage')
                         <a
                             href="{{ route('admin.discounts.index') }}"
                             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition
@@ -91,7 +97,9 @@
                             </svg>
                             Diskon
                         </a>
+                        @endcan
 
+                        @can('categories.manage')
                         <a
                             href="{{ route('admin.categoryProducts.index') }}"
                             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition
@@ -103,8 +111,29 @@
                             </svg>
                             Kategori
                         </a>
+                        @endcan
+                        </div>
                     </div>
-                </div>
+                @endcanany
+
+                @can('users.manage')
+                    <div>
+                        <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            Manajemen Akun
+                        </p>
+
+                        <a
+                            href="{{ route('admin.users.index') }}"
+                            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition
+                            {{ request()->routeIs('admin.users.*') ? 'bg-brand-light text-brand-dark' : 'text-slate-600 hover:bg-slate-50 hover:text-brand-dark' }}"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m16-10a4 4 0 0 0 0-8m4 18v-2a4 4 0 0 0-3-3.87M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/>
+                            </svg>
+                            Manajemen Admin
+                        </a>
+                    </div>
+                @endcan
 
             </nav>
 
@@ -150,13 +179,20 @@
 
                 <div class="flex items-center gap-3">
                     <div class="hidden text-right sm:block">
-                        <p class="text-sm font-semibold text-slate-800">Administrator</p>
-                        <p class="text-xs text-slate-500">Admin Panel</p>
+                        <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->name }}</p>
+                        <p class="text-xs text-slate-500">{{ auth()->user()->email }}</p>
                     </div>
 
                     <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-light font-semibold text-brand-dark">
-                        A
+                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                     </div>
+
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-brand-dark">
+                            Keluar
+                        </button>
+                    </form>
                 </div>
             </header>
 
