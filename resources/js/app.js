@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const steps = Array.from(form.querySelectorAll('[data-product-step]'));
     const indicators = Array.from(form.querySelectorAll('[data-step-indicator]'));
+    const progressLine = form.querySelector('[data-step-progress]');
     const nutritionToggle = form.querySelector('[name="nutrition_facts_enabled"]');
     const nutritionFields = form.querySelector('#nutrition-fields-wrapper');
     let activeStep = Number(form.dataset.startStep) || 1;
@@ -53,14 +54,27 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         indicators.forEach(function (indicator) {
-            const isActive = Number(indicator.dataset.stepIndicator) === activeStep;
+            const stepNumber = Number(indicator.dataset.stepIndicator);
+            const isActive = stepNumber === activeStep;
+            const isReached = stepNumber <= activeStep;
+            const marker = indicator.querySelector('[data-step-marker]');
 
             indicator.setAttribute('aria-current', isActive ? 'step' : 'false');
-            indicator.classList.toggle('border-brand-dark', isActive);
-            indicator.classList.toggle('bg-brand-light', isActive);
-            indicator.classList.toggle('text-brand-dark', isActive);
-            indicator.classList.toggle('text-gray-500', !isActive);
+            indicator.classList.toggle('text-brand-dark', isReached);
+            indicator.classList.toggle('text-gray-500', !isReached);
+
+            if (marker) {
+                marker.classList.toggle('bg-brand-dark', isReached);
+                marker.classList.toggle('text-white', isReached);
+                marker.classList.toggle('bg-gray-100', !isReached);
+                marker.classList.toggle('text-gray-600', !isReached);
+            }
         });
+
+        if (progressLine) {
+            progressLine.classList.toggle('bg-gray-200', activeStep <= 1);
+            progressLine.classList.toggle('bg-brand-dark', activeStep > 1);
+        }
     }
 
     form.querySelectorAll('[data-step-next]').forEach(function (button) {

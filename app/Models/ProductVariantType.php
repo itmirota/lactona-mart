@@ -11,8 +11,16 @@ class ProductVariantType extends Model
     protected $fillable = [
         'product_id',
         'name',
+        'affects_price',
         'sort_order',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'affects_price' => 'boolean',
+        ];
+    }
 
     public function product(): BelongsTo
     {

@@ -63,16 +63,20 @@
 
                     <!-- Kolom Variant -->
                     <td class="p-4 font-medium text-gray-800">
-                        @if($product->variantTypes->isNotEmpty())
-                            @foreach($product->variantTypes as $type)
-                            @foreach($type->variants as $variant)
-                            @if($variant->is_active)
-                                <span class="bg-green-100 text-green-800 px-2.5 py-1 rounded-full text-xs font-medium border border-green-200">
-                                    {{ $variant->name }}
-                                </span>
-                            @endif
-                            @endforeach
-                            @endforeach
+                        @php
+                            $activeTypes = $product->variantTypes->filter(
+                                fn($type) => $type->variants->contains('is_active', true)
+                            );
+                        @endphp
+
+                        @if($activeTypes->isNotEmpty())
+                            <div class="flex flex-wrap gap-1">
+                                @foreach($activeTypes as $type)
+                                    <span class="bg-green-100 text-green-800 px-2.5 py-1 rounded-full text-xs font-medium border border-green-200">
+                                        {{ $type->name }}
+                                    </span>
+                                @endforeach
+                            </div>
                         @else
                             <span class="bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-200">
                                 Tidak ada varian

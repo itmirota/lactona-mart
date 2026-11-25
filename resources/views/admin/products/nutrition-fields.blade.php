@@ -68,19 +68,33 @@
                 // Lewati nutrisi yang benar-benar tidak memiliki data.
                 if (
                     !isset($legacyItem['value']) &&
+                    !isset($legacyItem['per_serving']) &&
                     !isset($legacyItem['daily_value']) &&
-                    !isset($legacyItem['breastfeeding_daily_value'])
+                    !isset($legacyItem['breastfeeding_daily_value']) &&
+                    !isset($legacyItem['pregnancy']) &&
+                    !isset($legacyItem['lactation'])
                 ) {
                     continue;
                 }
 
+                $legacyValue = $legacyItem['value'] ?? $legacyItem['per_serving'] ?? '';
+                $legacyUnit = $legacyItem['unit'] ?? $unit;
+
+                if (
+                    is_string($legacyValue) &&
+                    $legacyUnit !== '' &&
+                    str_ends_with(trim($legacyValue), $legacyUnit)
+                ) {
+                    $legacyUnit = '';
+                }
+
                 $items[] = [
                     'name' => $name,
-                    'unit' => $unit,
-                    'value' => $legacyItem['value'] ?? '',
+                    'unit' => $legacyUnit,
+                    'value' => $legacyValue,
                     'percentages' => [
-                        $legacyItem['daily_value'] ?? '',
-                        $legacyItem['breastfeeding_daily_value'] ?? '',
+                        $legacyItem['daily_value'] ?? $legacyItem['pregnancy'] ?? '',
+                        $legacyItem['breastfeeding_daily_value'] ?? $legacyItem['lactation'] ?? '',
                     ],
                 ];
             }
@@ -88,14 +102,17 @@
             if (count($items)) {
                 $legacyGroups[] = [
                     'title' => $groupTitle,
+                    'use_serving' => true,
                     'items' => $items,
                 ];
             }
         }
 
         $nutritionData = [
-            'serving_size' => $nutritionData['serving_size'] ?? '',
-            'servings_per_package' => $nutritionData['servings_per_package'] ?? '',
+            'serving_size' => $nutritionData['serving_size']
+                ?? data_get($nutritionData, 'takaran_saji.per_serving', ''),
+            'servings_per_package' => $nutritionData['servings_per_package']
+                ?? data_get($nutritionData, 'jumlah_sajian_per_kemasan.per_serving', ''),
             'columns' => [
                 ['label' => 'Hamil'],
                 ['label' => 'Menyusui'],
@@ -109,6 +126,8 @@
         $nutritionData['groups'] = [
             [
                 'title' => 'Komponen Gizi',
+                'use_serving' => true,
+                'columns' => [],
                 'items' => [
                     [
                         'name' => '',
@@ -195,16 +214,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!builder) return;
 
-    const columnsContainer = document.getElementById('nutrition-columns-container');
     const groupsContainer = document.getElementById('nutrition-groups-container');
-    const noColumnsMessage = document.getElementById('nutrition-no-columns');
 
     let nutritionData = JSON.parse(builder.dataset.initial);
 
     const legacyColumns = nutritionData.columns || [];
 
     nutritionData.groups = nutritionData.groups || [];
+
     nutritionData.groups.forEach(group => {
+        // Produk lama tetap menggunakan Per Saji secara default.
+        group.use_serving = ![false, 0, '0'].includes(group.use_serving);
+
         if (!Array.isArray(group.columns)) {
             group.columns = legacyColumns.map(column => ({
                 label: column.label
@@ -212,6 +233,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         group.items = group.items || [];
+
+        group.items.forEach(item => {
+            item.percentages = Array.isArray(item.percentages)
+                ? item.percentages
+                : [];
+
+            item.unit = item.unit ?? '';
+            item.value = item.value ?? '';
+        });
     });
 
     function normalizePercentages() {
@@ -247,7 +277,17 @@ document.addEventListener('DOMContentLoaded', function () {
         nutritionData.groups = Array.from(
             groupsContainer.querySelectorAll('[data-group]')
         ).map(groupElement => {
+            const groupIndex = Number(groupElement.dataset.group);
+
+            const group = nutritionData.groups[groupIndex] || {};
+
             const groupTitle = groupElement.querySelector('[data-group-title]');
+
+            const useServingInput = groupElement.querySelector('[data-use-serving]');
+
+            const useServing = useServingInput
+                ? useServingInput.checked
+                : group.use_serving !== false;
 
             const columns = Array.from(
                 groupElement.querySelectorAll('[data-group-column-label]')
@@ -257,21 +297,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const items = Array.from(
                 groupElement.querySelectorAll('[data-item]')
-            ).map(itemElement => {
+            ).map((itemElement, itemIndex) => {
+                const oldItem = group.items?.[itemIndex] || {};
+
+                const valueInput = itemElement.querySelector('[data-item-value]');
+                const unitInput = itemElement.querySelector('[data-item-unit]');
+
                 const percentages = Array.from(
                     itemElement.querySelectorAll('[data-percentage]')
                 ).map(input => input.value);
 
                 return {
                     name: itemElement.querySelector('[data-item-name]').value,
-                    unit: itemElement.querySelector('[data-item-unit]').value,
-                    value: itemElement.querySelector('[data-item-value]').value,
+                    unit: unitInput ? unitInput.value : (oldItem.unit ?? ''),
+                    value: valueInput ? valueInput.value : (oldItem.value ?? ''),
                     percentages: percentages
                 };
             });
 
             return {
                 title: groupTitle.value,
+                use_serving: useServing,
                 columns: columns,
                 items: items
             };
@@ -286,24 +332,76 @@ document.addEventListener('DOMContentLoaded', function () {
         nutritionData.groups.forEach((group, groupIndex) => {
             group.columns = group.columns || [];
 
+            group.use_serving = group.use_serving !== false;
+
             const groupElement = document.createElement('div');
 
             groupElement.className = 'min-w-0 overflow-hidden rounded-xl border border-gray-200';
             groupElement.dataset.group = groupIndex;
 
+            const servingHeader = group.use_serving
+                ? '<th class="min-w-28 border border-gray-200 px-3 py-2 text-center">Per Saji</th>'
+                : '';
+
             const tableHeader = group.columns.map((column, columnIndex) => `
-                <th class="min-w-32 border border-gray-200 px-3 py-2 text-center">
+                <th
+                    data-group-column-header="${columnIndex}"
+                    class="min-w-32 border border-gray-200 px-3 py-2 text-center"
+                >
                     ${escapeHtml(column.label)}
                 </th>
             `).join('');
 
             const itemRows = (group.items || []).map((item, itemIndex) => {
-                const percentageInputs = group.columns.map((column, columnIndex) => `
-                    <td class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2 border-b border-gray-100 px-3 py-3 md:table-cell md:border md:p-2">
-                        <span class="text-xs font-medium text-gray-500 md:hidden">
-                            ${escapeHtml(column.label || `Kolom ${columnIndex + 1}`)}
-                        </span>
+                const servingCell = group.use_serving
+                    ? `
+                        <td class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2 border-b border-gray-100 px-3 py-3 md:table-cell md:min-w-28 md:border md:p-2">
+                            <span class="text-xs font-medium text-gray-500 md:hidden">Per Saji</span>
+                            <div class="flex items-center gap-1">
+                                <input
+                                    type="text"
+                                    name="nutrition_facts[groups][${groupIndex}][items][${itemIndex}][value]"
+                                    value="${escapeHtml(item.value ?? '')}"
+                                    placeholder="-"
+                                    data-item-value
+                                    class="w-full min-w-0 rounded-md border border-gray-300 px-2 py-2 text-center text-sm focus:border-brand-dark focus:outline-none"
+                                >
+                                <input
+                                    type="text"
+                                    name="nutrition_facts[groups][${groupIndex}][items][${itemIndex}][unit]"
+                                    value="${escapeHtml(item.unit ?? '')}"
+                                    placeholder="Satuan"
+                                    data-item-unit
+                                    class="w-16 rounded-md border border-gray-300 px-1 py-2 text-center text-xs focus:border-brand-dark focus:outline-none"
+                                >
+                            </div>
+                        </td>
+                    `
+                    : '';
 
+                const preservedServingValues = !group.use_serving
+                    ? `
+                        <input
+                            type="hidden"
+                            name="nutrition_facts[groups][${groupIndex}][items][${itemIndex}][value]"
+                            value="${escapeHtml(item.value ?? '')}"
+                            data-item-value
+                        >
+                        <input
+                            type="hidden"
+                            name="nutrition_facts[groups][${groupIndex}][items][${itemIndex}][unit]"
+                            value="${escapeHtml(item.unit ?? '')}"
+                            data-item-unit
+                        >
+                    `
+                    : '';
+
+                const percentageInputs = group.columns.map((column, columnIndex) => `
+                    <td class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2 border-b border-gray-100 px-3 py-3 md:table-cell md:min-w-28 md:border md:p-2 md:text-center">
+                        <span
+                            data-group-column-mobile-label="${columnIndex}"
+                            class="text-xs font-medium text-gray-500 md:hidden"
+                        >${escapeHtml(column.label)}</span>
                         <input
                             type="text"
                             name="nutrition_facts[groups][${groupIndex}][items][${itemIndex}][percentages][${columnIndex}]"
@@ -328,31 +426,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                 required
                                 class="w-full min-w-0 rounded-md border border-gray-300 px-2 py-2 text-sm focus:border-brand-dark focus:outline-none"
                             >
+                            ${preservedServingValues}
                         </td>
 
-                        <td class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2 border-b border-gray-100 px-3 py-3 md:table-cell md:min-w-28 md:border md:p-2">
-                            <span class="text-xs font-medium text-gray-500 md:hidden">Per Saji</span>
-                            <div class="flex items-center gap-1">
-                                <input
-                                    type="text"
-                                    name="nutrition_facts[groups][${groupIndex}][items][${itemIndex}][value]"
-                                    value="${escapeHtml(item.value)}"
-                                    placeholder="-"
-                                    data-item-value
-                                    required
-                                    class="w-full min-w-0 rounded-md border border-gray-300 px-2 py-2 text-center text-sm focus:border-brand-dark focus:outline-none"
-                                >
-
-                                <input
-                                    type="text"
-                                    name="nutrition_facts[groups][${groupIndex}][items][${itemIndex}][unit]"
-                                    value="${escapeHtml(item.unit)}"
-                                    placeholder="Satuan"
-                                    data-item-unit
-                                    class="w-16 rounded-md border border-gray-300 px-1 py-2 text-center text-xs focus:border-brand-dark focus:outline-none"
-                                >
-                            </div>
-                        </td>
+                        ${servingCell}
 
                         ${percentageInputs}
 
@@ -374,6 +451,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="flex flex-col items-stretch gap-3 bg-gray-100 p-3 sm:flex-row sm:items-center">
                     <input
                         type="text"
+                        name="nutrition_facts[groups][${groupIndex}][title]"
                         value="${escapeHtml(group.title)}"
                         placeholder="Nama grup nutrisi"
                         data-group-title
@@ -388,6 +466,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     >
                         + Tambah Nutrisi
                     </button>
+
+                    <label class="flex items-center gap-2 text-xs font-medium text-gray-700">
+                        <input
+                            type="hidden"
+                            name="nutrition_facts[groups][${groupIndex}][use_serving]"
+                            value="0"
+                        >
+                        <input
+                            type="checkbox"
+                            name="nutrition_facts[groups][${groupIndex}][use_serving]"
+                            value="1"
+                            data-use-serving
+                            ${group.use_serving ? 'checked' : ''}
+                            class="rounded border-gray-300 text-brand-dark focus:ring-brand-dark"
+                        >
+                        Gunakan kolom Per Saji
+                    </label>
 
                     <button
                         type="button"
@@ -422,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     name="nutrition_facts[groups][${groupIndex}][columns][${columnIndex}][label]"
                                     value="${escapeHtml(column.label)}"
                                     placeholder="Nama AKG"
-                                    data-group-column-label
+                                    data-group-column-label="${columnIndex}"
                                     class="w-40 rounded-md border border-gray-300 px-2 py-2 text-sm focus:border-brand-dark focus:outline-none"
                                 >
 
@@ -446,9 +541,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     Komponen Gizi
                                 </th>
 
-                                <th class="min-w-28 border border-gray-200 px-3 py-2 text-center">
-                                    Per Saji
-                                </th>
+                                ${servingHeader}
 
                                 ${tableHeader}
 
@@ -478,6 +571,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         nutritionData.groups.push({
             title: 'Grup Baru',
+            use_serving: true,
             columns: [],
             items: [
                 {
@@ -517,6 +611,8 @@ document.addEventListener('DOMContentLoaded', function () {
         collectFormData();
 
         const group = nutritionData.groups[groupIndex];
+
+        if (!group) return;
 
         if (addColumnButton) {
             group.columns.push({
@@ -570,69 +666,32 @@ document.addEventListener('DOMContentLoaded', function () {
         render();
     });
 
-    columnsContainer.addEventListener('input', function (event) {
-        const input = event.target.closest('[data-column-index]');
-
-        if (!input) {
-            return;
-        }
-
-        const index = Number(input.dataset.columnIndex);
-        const label = input.value || `Kolom ${index + 1}`;
-
-        groupsContainer.querySelectorAll(`[data-column-header="${index}"]`).forEach(header => {
-            header.textContent = label;
-        });
-
-        groupsContainer.querySelectorAll(`[data-column-label-display="${index}"]`).forEach(labelElement => {
-            labelElement.textContent = label;
-        });
-    });
-
-    groupsContainer.addEventListener('click', function (event) {
-        const addItemButton = event.target.closest('[data-add-item]');
-        const removeItemButton = event.target.closest('[data-remove-item]');
-        const removeGroupButton = event.target.closest('[data-remove-group]');
-
-        if (!addItemButton && !removeItemButton && !removeGroupButton) {
+    groupsContainer.addEventListener('change', function (event) {
+        if (!event.target.matches('[data-use-serving]')) {
             return;
         }
 
         collectFormData();
-
-        const groupElement = event.target.closest('[data-group]');
-        const groupIndex = Number(groupElement.dataset.group);
-
-        if (addItemButton) {
-            nutritionData.groups[groupIndex].items.push({
-                name: '',
-                unit: '',
-                value: '',
-                percentages: nutritionData.columns.map(() => '')
-            });
-        }
-
-        if (removeItemButton) {
-            const itemIndex = Number(removeItemButton.dataset.removeItem);
-
-            if (nutritionData.groups[groupIndex].items.length <= 1) {
-                alert('Setiap grup harus memiliki minimal satu komponen nutrisi.');
-                return;
-            }
-
-            nutritionData.groups[groupIndex].items.splice(itemIndex, 1);
-        }
-
-        if (removeGroupButton) {
-            if (nutritionData.groups.length <= 1) {
-                alert('Minimal harus ada satu grup nutrisi.');
-                return;
-            }
-
-            nutritionData.groups.splice(groupIndex, 1);
-        }
-
         render();
+    });
+
+    groupsContainer.addEventListener('input', function (event) {
+        const columnInput = event.target;
+
+        if (!columnInput.matches('[data-group-column-label]')) {
+            return;
+        }
+
+        const groupElement = columnInput.closest('[data-group]');
+        const columnIndex = Number(columnInput.dataset.groupColumnLabel);
+
+        groupElement
+            .querySelectorAll(
+                `[data-group-column-header="${columnIndex}"], [data-group-column-mobile-label="${columnIndex}"]`
+            )
+            .forEach(label => {
+                label.textContent = columnInput.value;
+            });
     });
 
     normalizePercentages();

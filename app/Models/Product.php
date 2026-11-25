@@ -195,4 +195,10 @@ class Product extends Model
         return $this->hasMany(ProductVariantType::class)
             ->orderBy('sort_order');
     }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)
+            ->orderBy('sort_order');
+    }
 }
