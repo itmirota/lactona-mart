@@ -8,7 +8,7 @@
         
         <div class="relative z-10 px-12 md:px-24 max-w-3xl text-white">
             <!-- <span class="text-sm tracking-[0.2em] uppercase opacity-90 mb-4 block">Kualitas</span> -->
-            <h2 class="w-full text-6xl font-serif mb-6">
+            <h2 class="w-full text-5xl font-serif mb-6">
                 Mulai sadar pentingnya asupan nutrisi tambahan untuk tumbuh kembang optimal.
             </h2>
             <p class="text-sm opacity-90 mb-10 max-w-md leading-relaxed">
@@ -26,6 +26,10 @@
                     <span>WATCH VIDEO</span>
                 </button> -->
             </div>
+        </div>
+
+        <div class="w-[250%] h-full bg-brand-teal/100 flex items-center justify-center pr-6">
+            <img class="w-full" src="{{ asset('hero-image.png') }}" alt="mirota care">
         </div>
     </section>
 
@@ -212,7 +216,7 @@
         <div class="bg-brand-dark rounded-2xl flex flex-col md:flex-row items-center overflow-hidden">
             <!-- Gambar Tambahan (Kiri) -->
             <div class="w-full md:w-5/12 h-64 bg-brand-teal/80 flex items-center justify-center p-8">
-                    <img class="w-50" src="{{ asset('mirota-care.png') }}" alt="mirota care">
+                    <img class="w-50" src="{{ asset('produk-all.png') }}" alt="mirota care">
             </div>
             <!-- Teks Penawaran (Tengah) -->
             <div class="w-full md:w-4/12 p-8 md:pl-12 text-white text-center md:text-left">
