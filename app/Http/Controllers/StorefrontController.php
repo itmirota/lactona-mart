@@ -29,9 +29,17 @@ class StorefrontController extends Controller
     public function detail(?Product $product = null): View
     {
         if (! $product || ! $product->exists) {
-            $product = Product::with(['category', 'currentDiscounts'])->first();
+            $product = Product::with([
+                'category',
+                'currentDiscounts',
+                'variantTypes.variants',
+            ])->first();
         } else {
-            $product->loadMissing('currentDiscounts');
+            $product->loadMissing([
+                'category',
+                'currentDiscounts',
+                'variantTypes.variants',
+            ]);
         }
 
         $nutritionFactSections = Product::nutritionFactSections();

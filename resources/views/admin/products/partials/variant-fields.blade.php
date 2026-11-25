@@ -4,6 +4,7 @@
             return [
                 'id' => $type->id,
                 'name' => $type->name,
+                'affects_price' => (bool) $type->affects_price,
                 'variants' => $type->variants->map(function ($variant) {
                     return [
                         'id' => $variant->id,
@@ -114,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             >
                         </div>
 
-                        <div>
+                        <div data-price-field class="${type.affects_price ? '' : 'hidden'}">
                             <label class="mb-1 block text-xs font-medium text-gray-600">
                                 Harga Khusus (Rp)
                             </label>
@@ -204,6 +205,18 @@ document.addEventListener('DOMContentLoaded', function () {
                         >
                     </div>
 
+                    <label class="mb-0 inline-flex items-center gap-2 text-sm text-gray-600">
+                        <input
+                            type="checkbox"
+                            name="variant_types[${typeIndex}][affects_price]"
+                            value="1"
+                            ${type.affects_price ? 'checked' : ''}
+                            data-affects-price
+                            class="rounded border-gray-300 text-brand-dark"
+                        >
+                        Jenis varian ini menentukan harga
+                    </label>
+
                     <button
                         type="button"
                         data-remove-type="${typeIndex}"
@@ -246,11 +259,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const type = {
                 id: typeId,
                 name: typeName,
+                affects_price: typeElement.querySelector('[data-affects-price]')?.checked ?? false,
                 variants: []
             };
 
             typeElement.querySelectorAll('.variant-item').forEach((variantElement) => {
-                const inputs = variantElement.querySelectorAll('input');
 
                 const variantId = variantElement.querySelector(
                     'input[type="hidden"][name$="[id]"]'
@@ -258,10 +271,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const variant = {
                     id: variantId,
-                    name: inputs[variantId ? 1 : 0]?.value ?? '',
-                    price: inputs[variantId ? 2 : 1]?.value ?? '',
-                    stock: inputs[variantId ? 3 : 2]?.value ?? '',
+
+                    name: variantElement.querySelector(
+                        'input[name$="[name]"]'
+                    )?.value ?? '',
+
+                    price: variantElement.querySelector(
+                        'input[name$="[price]"]'
+                    )?.value ?? '',
+
+                    stock: variantElement.querySelector(
+                        'input[name$="[stock]"]'
+                    )?.value ?? '',
+
                     image: variantElement.dataset.image ?? '',
+
                     is_active: variantElement.querySelector(
                         'input[type="checkbox"]'
                     )?.checked ?? false
@@ -281,6 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         variantTypes.push({
             name: '',
+            affects_price: false,
             variants: []
         });
 
@@ -337,6 +362,32 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     container.addEventListener('change', function (event) {
+        const priceCheckbox = event.target.closest('[data-affects-price]');
+
+        if (priceCheckbox) {
+            const currentType = priceCheckbox.closest('.variant-type-item');
+
+            if (priceCheckbox.checked) {
+                container.querySelectorAll('[data-affects-price]').forEach((checkbox) => {
+                    if (checkbox !== priceCheckbox) {
+                        checkbox.checked = false;
+
+                        const otherType = checkbox.closest('.variant-type-item');
+
+                        otherType.querySelectorAll('[data-price-field]').forEach((field) => {
+                            field.classList.add('hidden');
+                        });
+                    }
+                });
+            }
+
+            currentType.querySelectorAll('[data-price-field]').forEach((field) => {
+                field.classList.toggle('hidden', !priceCheckbox.checked);
+            });
+
+            return;
+        }
+
         const imageInput = event.target.closest('input[type="file"]');
 
         if (!imageInput) return;

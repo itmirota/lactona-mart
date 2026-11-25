@@ -1,6 +1,66 @@
 @extends('layouts.storefront')
 
 @section('content')
+
+@php
+    $hasNutritionFacts = !empty($product?->nutrition_facts);
+    
+    $variantData = $product?->variantTypes
+        ->map(function ($type) {
+            return [
+                'id' => $type->id,
+                'name' => $type->name,
+                'affects_price' => (bool) $type->affects_price,
+                'variants' => $type->variants
+                    ->where('is_active', true)
+                    ->map(function ($variant) {
+                        return [
+                            'id' => $variant->id,
+                            'name' => $variant->name,
+                            'price' => $variant->price,
+                            'image' => $variant->image
+                                ? \Illuminate\Support\Facades\Storage::url($variant->image)
+                                : null,
+                        ];
+                    })
+                    ->values()
+                    ->all(),
+            ];
+        })
+        ->filter(fn ($type) => count($type['variants']) > 0)
+        ->values()
+        ->all();
+
+    $activeDiscount = $product?->currentDiscount;
+
+    $discountData = [
+        'promotion_name' => $activeDiscount?->promotion_name,
+        'description' => $activeDiscount?->description,
+        'type' => $activeDiscount?->discount_type,
+        'value' => (float) ($activeDiscount?->discount_value ?? 0),
+    ];
+
+    // Daftar gambar produk: gambar utama + gambar tambahan
+    $productImages = collect();
+
+    if ($product?->image_url) {
+        $productImages->push([
+            'url' => $product->image_url,
+            'label' => 'Gambar utama',
+        ]);
+    }
+
+    foreach ($product?->images ?? [] as $index => $image) {
+        $productImages->push([
+            'url' => $image->image_url,
+            'label' => 'Gambar ' . ($index + 2),
+        ]);
+    }
+
+    $defaultProductImage = asset('produk/Lactona Ibu Cokelat.png');
+    $initialProductImage = $productImages->first()['url'] ?? $defaultProductImage;
+@endphp
+
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 font-sans text-gray-900">
     
     <!-- Top Breadcrumb / Promo bar -->
@@ -16,90 +76,287 @@
     </div> -->
 
     <!-- Main Product Section -->
-    <div x-data="{ 
-        mainImage: '{{ isset($product) && $product ? $product->image_url : asset('produk/Lactona Ibu Cokelat.png') }}', 
-        selectedVarian: 'Cokelat',
-        isZoomed: false 
+    <div
+        x-data="{
+            productImage: @js($initialProductImage),
+            mainImage: @js($initialProductImage),
+            productImages: @js($productImages->values()->all()),
+            selectedProductImage: @js($initialProductImage),
+
+            basePrice: @js((float) ($product?->price ?? 0)),
+            variantTypes: @js($variantData),
+            discount: @js($discountData),
+
+            selectedVariants: {},
+            selectedVarian: '',
+            lensActive: false,
+            lensVisible: false,
+            lensX: 0,
+            lensY: 0,
+            lensWidth: 0,
+            lensHeight: 0,
+            lensSize: 200,
+            lensZoom: 1.5,
+
+            init() {
+                this.selectedVariants = {};
+
+                this.selectedVarian = '';
+
+                this.mainImage = this.selectedProductImage;
+            },
+
+            getSelectedVariant(type) {
+                const selectedId = this.selectedVariants[type.id];
+
+                if (!selectedId) {
+                    return null;
+                }
+
+                return type.variants.find(
+                    variant => variant.id === selectedId
+                ) ?? null;
+            },
+
+            get selectedBasePrice() {
+                const priceType = this.variantTypes.find(
+                    type => type.affects_price
+                );
+
+                if (!priceType) {
+                    return this.basePrice;
+                }
+
+                const selected = this.getSelectedVariant(priceType);
+
+                if (selected && Number(selected.price) > 0) {
+                    return Number(selected.price);
+                }
+
+                return this.basePrice;
+            },
+
+            get finalPrice() {
+                const price = this.selectedBasePrice;
+                const value = Number(this.discount.value || 0);
+
+                if (this.discount.type === 'percentage') {
+                    return Math.max(0, price - (price * value / 100));
+                }
+
+                if (this.discount.type === 'fixed') {
+                    return Math.max(0, price - value);
+                }
+
+                return price;
+            },
+
+            get hasDiscount() {
+                return (
+                    ['percentage', 'fixed'].includes(this.discount.type)
+                    && Number(this.discount.value) > 0
+                );
+            },
+
+            formatPrice(value) {
+                return new Intl.NumberFormat('id-ID').format(
+                    Math.round(Number(value) || 0)
+                );
+            },
+
+            updateSelection() {
+                const selected = this.variantTypes
+                    .map(type => this.getSelectedVariant(type))
+                    .filter(Boolean);
+
+                this.selectedVarian = selected
+                    .map(variant => variant.name)
+                    .join(' / ');
+
+                const imageVariant = selected.find(variant => variant.image);
+
+                this.mainImage = imageVariant
+                    ? imageVariant.image
+                    : this.selectedProductImage;
+            },
+
+            selectProductImage(image) {
+                this.selectedProductImage = image;
+                this.mainImage = image;
+            },
+
+            selectVariant(typeId, variantId) {
+                this.selectedVariants[typeId] = variantId;
+                this.updateSelection();
+            },
+
+            toggleLens() {
+                this.lensActive = !this.lensActive;
+
+                if (this.lensActive) {
+                    // Aktifkan lensa dan tampilkan di tengah gambar
+                    const rect = this.$refs.mainImageArea.getBoundingClientRect();
+
+                    this.lensWidth = rect.width;
+                    this.lensHeight = rect.height;
+                    this.lensX = rect.width / 2;
+                    this.lensY = rect.height / 2;
+                    this.lensVisible = true;
+                } else {
+                    this.lensVisible = false;
+                }
+            },
+
+            moveLens(event) {
+                if (!this.lensActive) return;
+
+                const rect = event.currentTarget.getBoundingClientRect();
+
+                this.lensWidth = rect.width;
+                this.lensHeight = rect.height;
+
+                this.lensX = Math.max(
+                    this.lensSize / 2,
+                    Math.min(
+                        event.clientX - rect.left,
+                        rect.width - this.lensSize / 2
+                    )
+                );
+
+                this.lensY = Math.max(
+                    this.lensSize / 2,
+                    Math.min(
+                        event.clientY - rect.top,
+                        rect.height - this.lensSize / 2
+                    )
+                );
+
+                this.lensVisible = true;
+            },
+
+            hideLens() {
+                this.lensVisible = false;
+            },
         }"
-        class="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-16">
-        
-        <!-- Left Column: Product Images -->
+        class="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-16"
+    >       
         <!-- Left Column: Product Images -->
         <!-- Inisialisasi Alpine.js state 'mainImage' dengan gambar default pertama -->
         <div class="md:col-span-7 flex flex-col-reverse md:flex-row gap-4">
             
-            <!-- Thumbnails -->
-            <div class="flex md:flex-col gap-4 overflow-x-auto md:w-20 shrink-0">
-                <!-- Thumbnail 1 -->
-                <!-- x-on:click memperbarui nilai 'mainImage' sesuai dengan gambar ini -->
-                <!-- x-bind:class memberikan efek visual (border hitam tebal) jika gambar ini sedang aktif -->
-                <button @click="mainImage = '{{ asset('produk/Lactona Ibu Cokelat.png') }}'"
-                        :class="{ 'border-black opacity-100': mainImage === '{{ asset('produk/Lactona Ibu Cokelat.png') }}', 'border-gray-200 opacity-70 hover:opacity-100': mainImage !== '/produk/lactona ibu cokelat.png' }"
-                        class="w-16 h-20 md:w-full md:h-24 bg-gray-100 rounded border-2 overflow-hidden relative shrink-0 transition-opacity">
-                     <!-- Perhatikan: src thumbnail bisa versi resolusi kecil, tapi URL di @click harus resolusi besar -->
-                     <img src="{{ asset('produk/Lactona Ibu Cokelat.png') }}" class="w-full h-full object-cover" alt="Thumb 1">
-                </button>
+            <!-- Thumbnail Produk -->
+            <div class="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:w-20 shrink-0">
 
-                <!-- Thumbnail 2 -->
-                <button @click="mainImage = '{{ asset('produk/Lactona Ibu Stroberi.png') }}'"
-                        :class="{ 'border-black opacity-100': mainImage === '{{ asset('produk/Lactona Ibu Stroberi.png') }}', 'border-gray-200 opacity-70 hover:opacity-100': mainImage !== '/produk/lactona ibu stroberi.png' }"
-                        class="w-16 h-20 md:w-full md:h-24 bg-gray-100 rounded border-2 overflow-hidden relative shrink-0 transition-opacity">
-                     <img src="{{ asset('produk/Lactona Ibu Stroberi.png') }}" class="w-full h-full object-cover" alt="Thumb 2">
-                </button>
+                <template x-for="(image, index) in productImages" :key="index">
+                    <button
+                        type="button"
+                        @click="selectProductImage(image.url)"
+                        :class="selectedProductImage === image.url
+                            ? 'border-brand-dark ring-1 ring-brand-dark'
+                            : 'border-gray-200 hover:border-gray-400'"
+                        class="w-16 h-20 md:w-full md:h-24 bg-gray-100 rounded border-2 overflow-hidden relative shrink-0 transition-all"
+                        :title="image.label"
+                    >
+                        <img
+                            :src="image.url"
+                            class="w-full h-full object-cover"
+                            :alt="image.label"
+                        >
+                    </button>
+                </template>
 
-                <!-- Thumbnail 3 -->
-                <button @click="mainImage = '{{ asset('produk/Lactona Ibu Vanila.png') }}'"
-                        :class="{ 'border-black opacity-100': mainImage === '{{ asset('produk/Lactona Ibu Vanila.png') }}', 'border-gray-200 opacity-70 hover:opacity-100': mainImage !== '/produk/lactona ibu vanila.png' }"
-                        class="w-16 h-20 md:w-full md:h-24 bg-gray-100 rounded border-2 overflow-hidden relative shrink-0 transition-opacity">
-                    <img src="{{ asset('produk/Lactona Ibu Vanila.png') }}" class="w-full h-full object-cover" alt="Thumb 3">
-                </button>
-
-                <button class="w-16 h-20 md:w-full h-10 bg-gray-50 flex items-center justify-center rounded border border-gray-200 hover:bg-gray-100 shrink-0">
-                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
             </div>
-
+           
             <!-- Main Image Area -->
-            <!-- Inisialisasi state isZoomed = false pada pembungkus utama jika belum ada -->
             <div class="flex-grow bg-gray-50 rounded-xl relative group">
-                
-                <!-- Elemen gambar utama -->
-                <div class="relative overflow-hidden cursor-zoom-in" @click="isZoomed = true">
-                    <img :src="mainImage" 
+
+                <!-- Area Gambar Utama -->
+                <div
+                    x-ref="mainImageArea"
+                    class="h-[700px] relative overflow-hidden"
+                    :class="lensActive ? 'cursor-none' : 'cursor-default'"
+                    @mousemove="moveLens($event)"
+                    @mouseleave="hideLens()"
+                    @click="if (lensActive) toggleLens()"
+                >
+                    <!-- Gambar Produk -->
+                    <img
+                        :src="mainImage"
                         x-transition.opacity.duration.300ms
-                        class="w-full h-full object-cover min-h-[400px] md:min-h-[600px]" alt="Main Product">
-                    
-                    <!-- Ikon kaca pembesar (akan muncul saat hover) -->
-                    <button class="absolute bottom-6 right-6 bg-white p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                        <!-- Ikon Zoom In -->
-                        <svg class="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                        class="w-full h-full object-contain min-h-[400px] md:min-h-[600px]"
+                        alt="Main Product"
+                    >
+
+                    <!-- Tombol Kaca Pembesar -->
+                    <button
+                        type="button"
+                        @click.stop="toggleLens()"
+                        :class="lensActive
+                            ? 'bg-brand-dark text-white'
+                            : 'bg-white text-gray-800 hover:bg-gray-100'"
+                        :aria-pressed="lensActive"
+                        :title="lensActive ? 'Nonaktifkan kaca pembesar' : 'Aktifkan kaca pembesar'"
+                        class="absolute bottom-6 right-6 z-20 p-3 rounded-full shadow-lg transition-colors"
+                    >
+                        <svg
+                            x-show="!lensActive"
+                            class="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                            />
+                        </svg>
+
+                        <svg
+                            x-show="lensActive"
+                            x-cloak
+                            class="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
                         </svg>
                     </button>
-                </div>
 
-                <!-- Modal/Overlay untuk Zoom In -->
-                <!-- Hanya tampil saat isZoomed bernilai true -->
-                <div x-show="isZoomed" 
-                    x-transition.opacity 
-                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
-                    style="display: none;">
-                    
-                    <!-- Tombol Close (X) -->
-                    <button @click="isZoomed = false" class="absolute top-8 right-8 text-white hover:text-gray-300">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
+                    <!-- Kaca Pembesar -->
+                    <div
+                        x-show="lensActive && lensVisible"
+                        x-transition.opacity.duration.150ms
+                        class="absolute z-10 rounded-full overflow-hidden border-4 border-white shadow-2xl pointer-events-none"
+                        :style="{
+                            width: lensSize + 'px',
+                            height: lensSize + 'px',
+                            left: (lensX - lensSize / 2) + 'px',
+                            top: (lensY - lensSize / 2) + 'px'
+                        }"
+                        style="display: none;"
+                    >
+                        <img
+                            :src="mainImage"
+                            class="absolute max-w-none object-contain"
+                            alt="Perbesaran gambar produk"
+                            :style="{
+                                width: (lensWidth * lensZoom) + 'px',
+                                height: (lensHeight * lensZoom) + 'px',
+                                left: (-(lensX * lensZoom - lensSize / 2)) + 'px',
+                                top: (-(lensY * lensZoom - lensSize / 2)) + 'px'
+                            }"
+                        >
+                    </div>
 
-                    <!-- Gambar yang diperbesar -->
-                    <!-- Menggunakan @click.away agar modal tertutup jika mengklik di luar gambar -->
-                    <img :src="mainImage" 
-                        @click.away="isZoomed = false"
-                        class="max-w-[90vw] max-h-[90vh] object-contain cursor-zoom-out" 
-                        alt="Zoomed Product">
                 </div>
-                
             </div>
         </div>
 
@@ -124,25 +381,45 @@
 
             <!-- Price -->
             <div class="mb-6">
-                @if ($product?->currentDiscount)
-                    <span class="mb-2 inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700">
-                        {{ $product->currentDiscount->promotion_name }}
-                    </span>
-                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <span class="text-base font-medium text-gray-400 line-through">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
-                        <span class="text-3xl font-bold text-rose-700">Rp {{ number_format($product->discounted_price, 0, ',', '.') }}</span>
-                    </div>
-                    @if ($product->currentDiscount->description)
-                        <p class="mt-2 max-w-xl text-sm leading-relaxed text-gray-500">{{ $product->currentDiscount->description }}</p>
-                    @endif
-                @else
-                    <span class="text-3xl font-bold text-gray-900">Rp {{ number_format($product?->price ?? 0, 0, ',', '.') }}</span>
-                @endif
-            </div>
+                <div
+                    x-show="hasDiscount"
+                    x-cloak
+                >
+                    <span
+                        x-show="discount.promotion_name"
+                        x-text="discount.promotion_name"
+                        class="mb-2 inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700"
+                    ></span>
 
-            <p class="text-gray-600 text-sm leading-relaxed mb-8">
-                {{ $product?->description ?? 'Deskripsi produk belum tersedia.' }}
-            </p>
+                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span
+                            class="text-base font-medium text-gray-400 line-through"
+                            x-text="'Rp ' + formatPrice(selectedBasePrice)"
+                        ></span>
+
+                        <span
+                            class="text-3xl font-bold text-rose-700"
+                            x-text="'Rp ' + formatPrice(finalPrice)"
+                        ></span>
+                    </div>
+                </div>
+
+                <div
+                    x-show="!hasDiscount"
+                    x-cloak
+                >
+                    <span
+                        class="text-3xl font-bold text-gray-900"
+                        x-text="'Rp ' + formatPrice(finalPrice)"
+                    ></span>
+                </div>
+
+                <p
+                    x-show="hasDiscount && discount.description"
+                    x-text="discount.description"
+                    class="mt-2 max-w-xl text-sm leading-relaxed text-gray-500"
+                ></p>
+            </div>
 
             <!-- Color Selection -->
             <!-- <div class="mb-6">
@@ -156,42 +433,42 @@
             </div> -->
 
             <!-- Varian Selection -->
-            <div class="mb-8">
-                
-                <div class="flex justify-between items-center mb-3">
-                    <!-- x-text akan otomatis mengganti tulisan di dalam span sesuai tombol yang diklik -->
-                    <h3 class="text-sm font-semibold">Size: <span x-text="selectedVarian" class="font-normal text-gray-600 ml-1"></span></h3>
-                    <!-- <a href="#" class="text-sm text-gray-500 underline flex items-center hover:text-black">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path></svg>
-                        Size Guide
-                    </a> -->
-                </div>
+            <div
+                class="mb-8"
+                x-show="variantTypes.length > 0"
+                x-cloak
+            >
+                <template x-for="type in variantTypes" :key="type.id">
+                    <div class="mb-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-semibold">
+                                <span x-text="type.name"></span>:
 
-                <div class="grid grid-cols-5 gap-3">
-                    <!-- Tombol S -->
-                    <!-- @click mengubah nilai selectedVarian -->
-                    <!-- :class memberikan warna hitam (aktif) jika state cocok, dan abu-abu (tidak aktif) jika tidak cocok -->
-                    <button @click="mainImage = '{{ asset('produk/Lactona Ibu Cokelat.png') }}'; selectedVarian = 'Cokelat'"
-                            :class="selectedVarian === 'Cokelat' ? 'border-brand-dark bg-brand-dark text-white' : 'border-gray-300 hover:border-brand-dark hover:bg-gray-50'"
-                            class="border py-3 text-sm font-medium rounded transition-colors">
-                        Cokelat
-                    </button>
+                                <span
+                                    x-text="getSelectedVariant(type)?.name ?? '-'"
+                                    class="font-normal text-gray-600 ml-1"
+                                ></span>
+                            </h3>
+                        </div>
 
-                    <!-- Tombol M -->
-                    <button @click="mainImage = '{{ asset('produk/Lactona Ibu Stroberi.png') }}'; selectedVarian = 'Stroberi'"
-                            :class="selectedVarian === 'Stroberi' ? 'border-brand-dark bg-brand-dark text-white' : 'border-gray-300 hover:border-brand-dark hover:bg-gray-50'"
-                            class="border py-3 text-sm font-medium rounded transition-colors">
-                        Stroberi
-                    </button>
-
-                    <!-- Tombol L -->
-                    <button @click="mainImage = '{{ asset('produk/Lactona Ibu Vanila.png') }}'; selectedVarian = 'Vanila'"
-                            :class="selectedVarian === 'Vanila' ? 'border-brand-dark bg-brand-dark text-white' : 'border-gray-300 hover:border-brand-dark hover:bg-gray-50'"
-                            class="border py-3 text-sm font-medium rounded transition-colors">
-                        Vanila
-                    </button>
-
-                </div>
+                        <div class="flex flex-wrap gap-3">
+                            <template
+                                x-for="variant in type.variants"
+                                :key="variant.id"
+                            >
+                                <button
+                                    type="button"
+                                    @click="selectVariant(type.id, variant.id)"
+                                    :class="selectedVariants[type.id] == variant.id
+                                        ? 'border-brand-dark bg-brand-dark text-white'
+                                        : 'border-gray-300 hover:border-brand-dark hover:bg-gray-50'"
+                                    class="border px-4 py-3 text-sm font-medium rounded transition-colors"
+                                    x-text="variant.name"
+                                ></button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
             </div>
 
             <!-- Action Buttons -->
@@ -230,143 +507,166 @@
     </div>
 
     <!-- Tabs & Extra Details -->
-    <div x-data="{activeTab: 'details'}" class="mt-20 border-t border-gray-200 pt-10 grid grid-cols-1 md:grid-cols-2 gap-12">
+    <div x-data="{activeTab: 'details', productImage: @js($product?->image_url ?? asset('produk/Lactona Ibu Cokelat.png'))}" class="mt-20 border-t border-gray-200 pt-10 grid grid-cols-1 md:grid-cols-2 gap-12">
         
         <!-- Left: Tabs and Info -->
         <div>
             <div class="flex space-x-8 border-b border-gray-200 mb-6">
-                <button @click="activeTab = 'details'"
-                    :class="activeTab === 'details' ? 'border-b-2 border-black font-semibold text-gray-900' : 'border-b-2 border-transparent text-gray-500 hover:text-black font-medium'"
-                    class="pb-2 text-sm transition-colors">
+                <button
+                    @click="activeTab = 'details'"
+                    :class="activeTab === 'details'
+                        ? 'border-b-2 border-black font-semibold text-gray-900'
+                        : 'border-b-2 border-transparent text-gray-500 hover:text-black font-medium'"
+                    class="pb-2 text-sm transition-colors"
+                >
                     Details
                 </button>
-                <button @click="activeTab = 'nutrision'"
-                    :class="activeTab === 'nutrision' ? 'border-b-2 border-black font-semibold text-gray-900' : 'border-b-2 border-transparent text-gray-500 hover:text-black font-medium'"
-                    class="pb-2 text-sm transition-colors">
-                    Nutrition Facts
-                </button>
+
+                @if ($hasNutritionFacts)
+                    <button
+                        @click="activeTab = 'nutrision'"
+                        :class="activeTab === 'nutrision'
+                            ? 'border-b-2 border-black font-semibold text-gray-900'
+                            : 'border-b-2 border-transparent text-gray-500 hover:text-black font-medium'"
+                        class="pb-2 text-sm transition-colors"
+                    >
+                        Nutrition Facts
+                    </button>
+                @endif
             </div>
 
             <!-- Konten Tab 1: Details -->
-            <!-- x-show memastikan bagian ini hanya tampil jika activeTab adalah 'details' -->
-            <div x-show="activeTab === 'details'" 
-                x-transition.opacity.duration.300ms>
-                <p class="text-gray-600 text-sm leading-relaxed mb-6">
-                    Lactona Ibu mengandung Protein yang sangat dibutuhkan bagi nutrisi ibu menyusui. Per sajian Lactona Ibu mengandung 7g yang akan membantu memenuhi kebutuhan protein ibu hamil.
-                </p>
-                <ul class="space-y-3 text-sm text-gray-800">
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 mr-3 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Protein</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 mr-3 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Tinggi Kalsium</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 mr-3 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        <span>Tinggi Zat Besi</span>
-                    </li>
-                </ul>
+            <div
+                x-show="activeTab === 'details'"
+                x-transition.opacity.duration.300ms
+            >
+                @if ($product?->description)
+                    <div class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+                        {{ $product->description }}
+                    </div>
+                @else
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Keterangan produk belum tersedia.
+                    </p>
+                @endif
             </div>
 
             <!-- Nutrition Facts tab -->
             <div x-show="activeTab === 'nutrision'" x-transition.opacity.duration.300ms style="display: none;">
-                <p class="text-gray-600 text-sm leading-relaxed mb-6">
-                    Berikut adalah detail informasi nilai gizi (Nutrition Facts) dari produk {{ $product?->name ?? 'ini' }} per takaran saji.
-                </p>
-
-                @php($nutritionFacts = $product?->nutrition_facts ?? [])
-
-                @if (empty($nutritionFacts))
-                    <p class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
-                        Nutrition Facts belum diisi untuk produk ini.
+                @if ($hasNutritionFacts)
+                    <!-- Nutrition Facts tab -->
+                    <div
+                        x-show="activeTab === 'nutrision'"
+                        x-transition.opacity.duration.300ms
+                        style="display: none;"
+                    >
+                    <p class="text-gray-600 text-sm leading-relaxed mb-6">
+                        Berikut adalah detail informasi nilai gizi (Nutrition Facts) dari produk {{ $product?->name ?? 'ini' }} per takaran saji.
                     </p>
-                @else
-                    <div class="overflow-x-auto">
-                        @if (isset($nutritionFacts['groups']))
-                            <div class="mb-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                                <p><span class="font-semibold">Takaran Saji:</span> {{ $nutritionFacts['serving_size'] ?? '-' }}</p>
-                                <p><span class="font-semibold">Jumlah Sajian per Kemasan:</span> {{ $nutritionFacts['servings_per_package'] ?? '-' }}</p>
-                            </div>
 
-                            <div class="space-y-4">
-                                @foreach ($nutritionFacts['groups'] as $group)
-                                    @php($columns = $group['columns'] ?? $nutritionFacts['columns'] ?? [])
-                                    <table class="min-w-full border-collapse border border-gray-200 text-sm text-gray-800">
-                                        <thead>
-                                            <tr class="bg-gray-100">
-                                                <th class="border border-gray-200 p-2 text-left">{{ $group['title'] }}</th>
-                                                <th class="border border-gray-200 p-2 text-center">Per Saji</th>
-                                                @foreach ($columns as $column)
-                                                    <th class="border border-gray-200 p-2 text-center">{{ $column['label'] }}</th>
-                                                @endforeach
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-100">
-                                            @foreach ($group['items'] as $item)
-                                                <tr>
-                                                    <td class="border border-gray-200 p-2">{{ $item['name'] }}</td>
-                                                    <td class="border border-gray-200 p-2 text-center font-semibold">
-                                                        {{ trim(($item['value'] ?? '') . ' ' . ($item['unit'] ?? '')) ?: '-' }}
-                                                    </td>
-                                                    @foreach ($columns as $columnIndex => $column)
-                                                        <td class="border border-gray-200 p-2 text-center">
-                                                            {{ $item['percentages'][$columnIndex] ?? '-' }}
-                                                        </td>
+                    @php($nutritionFacts = $product?->nutrition_facts ?? [])
+
+                    @if (empty($nutritionFacts))
+                        <p class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                            Nutrition Facts belum diisi untuk produk ini.
+                        </p>
+                    @else
+                        <div class="overflow-x-auto">
+                            @if (isset($nutritionFacts['groups']))
+                                <div class="mb-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                                    <p><span class="font-semibold">Takaran Saji:</span> {{ $nutritionFacts['serving_size'] ?? '-' }}</p>
+                                    <p><span class="font-semibold">Jumlah Sajian per Kemasan:</span> {{ $nutritionFacts['servings_per_package'] ?? '-' }}</p>
+                                </div>
+
+                                <div class="space-y-4">
+                                    @foreach ($nutritionFacts['groups'] as $group)
+                                        @php($columns = $group['columns'] ?? $nutritionFacts['columns'] ?? [])
+                                        @php($useServing = $group['use_serving'] ?? true)
+                                        <table class="min-w-full border-collapse border border-gray-200 text-sm text-gray-800">
+                                            <thead>
+                                                <tr class="bg-gray-100">
+                                                    <th class="border border-gray-200 p-2 text-left">{{ $group['title'] }}</th>
+                                                    @if ($useServing)
+                                                        <th class="border border-gray-200 p-2 text-center">Per Saji</th>
+                                                    @endif
+                                                    @foreach ($columns as $column)
+                                                        <th class="border border-gray-200 p-2 text-center">{{ $column['label'] }}</th>
                                                     @endforeach
                                                 </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                @endforeach
-                            </div>
-                        @else
-                            <table class="min-w-full border-collapse border border-gray-200 text-sm text-gray-800">
-                                <thead>
-                                    <tr class="border-b border-gray-200 bg-gray-100">
-                                        <th class="border-r border-gray-200 p-2 text-left" rowspan="2">Komponen Gizi</th>
-                                        <th class="border-r border-gray-200 p-2 text-center" rowspan="2">Per Saji</th>
-                                        <th class="p-2 text-center" colspan="2">% AKG</th>
-                                    </tr>
-                                    <tr class="border-b border-gray-200 bg-gray-50">
-                                        <th class="border-r border-gray-200 p-2 text-center">Hamil</th>
-                                        <th class="p-2 text-center">Menyusui</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    @foreach ($nutritionFactSections as $section)
-                                        @if ($section['show_heading'])
-                                            <tr class="bg-gray-50 font-semibold">
-                                                <td class="border-r border-gray-200 p-2" colspan="4">{{ $section['title'] }}</td>
-                                            </tr>
-                                        @endif
-
-                                        @foreach ($section['rows'] as $row)
-                                            <tr>
-                                                <td class="border-r border-gray-200 p-2">{{ $row['label'] }}</td>
-                                                @if ($row['single'])
-                                                    <td class="p-2 font-semibold" colspan="3">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
-                                                @else
-                                                    <td class="border-r border-gray-200 p-2 text-center font-semibold">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
-                                                    <td class="border-r border-gray-200 p-2 text-center">{{ data_get($nutritionFacts, $row['key'] . '.pregnancy') ?: '-' }}</td>
-                                                    <td class="p-2 text-center">{{ data_get($nutritionFacts, $row['key'] . '.lactation') ?: '-' }}</td>
-                                                @endif
-                                            </tr>
-                                        @endforeach
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-100">
+                                                @foreach ($group['items'] as $item)
+                                                    <tr>
+                                                        <td class="border border-gray-200 p-2">{{ $item['name'] }}</td>
+                                                        @if ($useServing)
+                                                            <td class="border border-gray-200 p-2 text-center font-semibold">
+                                                                {{ trim(($item['value'] ?? '') . ' ' . ($item['unit'] ?? '')) ?: '-' }}
+                                                            </td>
+                                                        @endif
+                                                        @foreach ($columns as $columnIndex => $column)
+                                                            <td class="border border-gray-200 p-2 text-center">
+                                                                {{ $item['percentages'][$columnIndex] ?? '-' }}
+                                                            </td>
+                                                        @endforeach
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
                                     @endforeach
-                                </tbody>
-                            </table>
-                        @endif
+                                </div>
+                            @else
+                                <table class="min-w-full border-collapse border border-gray-200 text-sm text-gray-800">
+                                    <thead>
+                                        <tr class="border-b border-gray-200 bg-gray-100">
+                                            <th class="border-r border-gray-200 p-2 text-left" rowspan="2">Komponen Gizi</th>
+                                            <th class="border-r border-gray-200 p-2 text-center" rowspan="2">Per Saji</th>
+                                            <th class="p-2 text-center" colspan="2">% AKG</th>
+                                        </tr>
+                                        <tr class="border-b border-gray-200 bg-gray-50">
+                                            <th class="border-r border-gray-200 p-2 text-center">Hamil</th>
+                                            <th class="p-2 text-center">Menyusui</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        @foreach ($nutritionFactSections as $section)
+                                            @if ($section['show_heading'])
+                                                <tr class="bg-gray-50 font-semibold">
+                                                    <td class="border-r border-gray-200 p-2" colspan="4">{{ $section['title'] }}</td>
+                                                </tr>
+                                            @endif
+
+                                            @foreach ($section['rows'] as $row)
+                                                <tr>
+                                                    <td class="border-r border-gray-200 p-2">{{ $row['label'] }}</td>
+                                                    @if ($row['single'])
+                                                        <td class="p-2 font-semibold" colspan="3">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
+                                                    @else
+                                                        <td class="border-r border-gray-200 p-2 text-center font-semibold">{{ data_get($nutritionFacts, $row['key'] . '.per_serving') ?: '-' }}</td>
+                                                        <td class="border-r border-gray-200 p-2 text-center">{{ data_get($nutritionFacts, $row['key'] . '.pregnancy') ?: '-' }}</td>
+                                                        <td class="p-2 text-center">{{ data_get($nutritionFacts, $row['key'] . '.lactation') ?: '-' }}</td>
+                                                    @endif
+                                                </tr>
+                                            @endforeach
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @endif
+                        </div>
+                    @endif
                     </div>
                 @endif
             </div>
         </div>
         <!-- Right: Detail Image -->
         <div class="h-64 md:rounded-lg overflow-hidden bg-gray-100 relative">
-             <img src="{{ asset('produk/Lactona Ibu Cokelat.png') }}" class="w-full h-full object-cover" alt="Detail texture">
+            <img
+                :src="productImage"
+                class="w-full h-full object-contain"
+                alt="Foto produk"
+            >
         </div>
     </div>
+
     {{--
     <!-- Related Products -->
     <div class="mt-24">
