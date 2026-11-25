@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lactona Mart</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('lactona-logo.png') }}">
     <!-- Memuat Tailwind CSS melalui Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -29,7 +30,7 @@
             <!-- Bagian Kiri: Logo -->
             <div class="flex items-center space-x-2">
                 <div class="w-30 h-9 flex items-center justify-center">
-                    <img src="{{ asset('lactona-logo.png') }}" alt="" srcset="">
+                    <img class="w-20" src="{{ asset('lactona-logo.png') }}" alt="" srcset="">
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-wide leading-tight">Lactona Mart</h1>
