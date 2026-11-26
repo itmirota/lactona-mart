@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [StorefrontController::class, 'home'])->name('home');
 Route::get('/produk-kami', [StorefrontController::class, 'products'])->name('products.public');
+Route::get('/keranjang/produk', [StorefrontController::class, 'cartProducts'])->name('cart.products');
 Route::get('/detail/{product?}', [StorefrontController::class, 'detail'])->name('products.detail');
 
 Route::get('/dashboard', function () {

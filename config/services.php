@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Third Party Services
@@ -35,4 +34,7 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'admin_number' => env('WHATSAPP_ADMIN_NUMBER', '6285848130003'),
+    ],
 ];
