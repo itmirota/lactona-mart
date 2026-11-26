@@ -28,7 +28,7 @@
             </div>
         </div>
         <div class="w-full md:w-[200%] h-64 bg-brand-teal/80 flex items-center justify-center p-8">
-            <img src="{{ asset('hero-image.png') }}" alt="mirota care">
+            <img src="{{ asset('hero-image.webp') }}" alt="mirota care">
         </div>
     </section>
 
@@ -188,10 +188,10 @@
                     {{-- Tombol Aksi --}}
                     <div class="flex space-x-2">
                         <a
-                            href="{{ url('/detail') }}"
+                            href="{{ route('products.detail', $product) }}"
                             class="text-center flex-1 bg-brand-dark hover:bg-brand-teal text-white text-xs font-bold py-2.5 rounded transition-colors uppercase tracking-wide"
                         >
-                            Beli Sekarang &gt;
+                            Lihat Detail &gt;
                         </a>
                     </div>
 
@@ -215,7 +215,7 @@
         <div class="bg-brand-dark rounded-2xl flex flex-col md:flex-row items-center overflow-hidden">
             <!-- Gambar Tambahan (Kiri) -->
             <div class="w-full md:w-5/12 h-64 bg-brand-teal/80 flex items-center justify-center p-8">
-                    <img class="w-50" src="{{ asset('cta-image.png') }}" alt="mirota care">
+                    <img class="w-50" src="{{ asset('cta-image.webp') }}" alt="mirota care">
             </div>
             <!-- Teks Penawaran (Tengah) -->
             <div class="w-full md:w-4/12 p-8 md:pl-12 text-white text-center md:text-left">

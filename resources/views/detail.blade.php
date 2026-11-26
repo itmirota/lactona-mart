@@ -84,11 +84,13 @@
             selectedProductImage: @js($initialProductImage),
 
             basePrice: @js((float) ($product?->price ?? 0)),
+            productId: @js($product?->id),
+            productName: @js($product?->name ?? 'Lactona Ibu'),
             variantTypes: @js($variantData),
             discount: @js($discountData),
+            cartMessage: '',
 
             selectedVariants: {},
-            selectedVarian: '',
             lensActive: false,
             lensVisible: false,
             lensX: 0,
@@ -100,8 +102,6 @@
 
             init() {
                 this.selectedVariants = {};
-
-                this.selectedVarian = '';
 
                 this.mainImage = this.selectedProductImage;
             },
@@ -169,10 +169,6 @@
                     .map(type => this.getSelectedVariant(type))
                     .filter(Boolean);
 
-                this.selectedVarian = selected
-                    .map(variant => variant.name)
-                    .join(' / ');
-
                 const imageVariant = selected.find(variant => variant.image);
 
                 this.mainImage = imageVariant
@@ -187,7 +183,41 @@
 
             selectVariant(typeId, variantId) {
                 this.selectedVariants[typeId] = variantId;
+                this.cartMessage = '';
                 this.updateSelection();
+            },
+
+            addToCart() {
+                const missingType = this.variantTypes.find(
+                    type => !this.getSelectedVariant(type)
+                );
+
+                if (missingType) {
+                    this.cartMessage = 'Pilih ' + missingType.name + ' terlebih dahulu.';
+
+                    return;
+                }
+
+                const selectedVariants = this.variantTypes.map(type => {
+                    const variant = this.getSelectedVariant(type);
+
+                    return {
+                        typeId: type.id,
+                        variantId: variant.id,
+                        typeName: type.name,
+                        name: variant.name,
+                    };
+                });
+
+                window.Alpine.store('cart').add({
+                    productId: this.productId,
+                    name: this.productName,
+                    image: this.mainImage,
+                    unitPrice: this.finalPrice,
+                    variants: selectedVariants,
+                });
+
+                this.cartMessage = '';
             },
 
             toggleLens() {
@@ -472,13 +502,26 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex space-x-4 mb-8">
-            <a :href="`https://wa.me/08993932789?text=Halo MinTona, aku ingin membeli produk lactona ibu rasa ${selectedVarian}`" 
-            target="_blank" 
-            class="flex-grow bg-brand-dark hover:bg-gray-800 text-white font-semibold py-4 px-8 rounded flex justify-center items-center space-x-2 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                <span>Beli Sekarang</span>
-            </a>
+            <div class="mb-8">
+                <p
+                    x-show="cartMessage"
+                    x-text="cartMessage"
+                    x-cloak
+                    role="alert"
+                    class="mb-3 text-sm font-medium text-rose-600"
+                ></p>
+                @if ($product)
+                    <button
+                        type="button"
+                        @click="addToCart()"
+                        class="flex w-full items-center justify-center gap-2 rounded bg-brand-dark px-8 py-4 font-semibold text-white transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-dark focus:ring-offset-2"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                        </svg>
+                        <span>Tambah ke Keranjang</span>
+                    </button>
+                @endif
                 <!-- <button class="w-14 h-14 border border-gray-300 rounded flex items-center justify-center hover:border-brand-dark hover:bg-gray-50 transition-colors">
                     <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                 </button> -->
