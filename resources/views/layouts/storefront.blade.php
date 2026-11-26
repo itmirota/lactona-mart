@@ -31,18 +31,16 @@
 
     <!-- Navigasi Utama menggunakan Alpine.js -->
     <!-- Atribut x-data=" { open: false } " menginisialisasi state 'open' untuk menu mobile -->
-    <nav class="bg-brand-dark sticky top-0 z-50 text-white py-5 transition-all duration-300" x-data="{ open: false }">
+    <nav class="bg-brand-dark sticky top-0 z-50 text-white py-4 transition-all duration-300" x-data="{ open: false }">
         <div class=" max-w-7xl mx-auto flex items-center justify-between">
             
             <!-- Bagian Kiri: Logo -->
-            <div class="flex items-center space-x-2">
-                <div class="w-30 h-9 flex items-center justify-center">
-                    <img class="w-20" src="{{ asset('lactona-logo.png') }}" alt="" srcset="">
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-wide leading-tight">Lactona Mart</h1>
-                    <span class="text-[10px] tracking-widest uppercase opacity-80">Tumbuh bersama lactona</span>
-                </div>
+            <div class="w-85 h-25 flex items-center justify-start">
+                <img
+                    class="w-48 h-auto object-contain"
+                    src="{{ asset('Logo Lactona Mart Berkilau.png') }}"
+                    alt="Lactona Mart"
+                >
             </div>
             
             <!-- Bagian Tengah: Menu Desktop (Disembunyikan saat layar kecil) -->
@@ -490,18 +488,23 @@
                             </div>
 
                             <div>
-                                <label for="cart-customer-phone" class="mb-1.5 block text-sm font-medium text-gray-700">Nomor WhatsApp</label>
+                                <label for="cart-customer-phone" class="mb-1.5 block text-sm font-medium text-gray-700">
+                                    Nomor WhatsApp
+                                </label>
+
                                 <input
                                     id="cart-customer-phone"
                                     name="phone"
-                                    type="tel"
-                                    inputmode="tel"
+                                    type="text"
+                                    inputmode="numeric"
+                                    pattern="[0-9]+"
                                     autocomplete="tel"
                                     required
                                     class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-brand-dark focus:ring-brand-dark"
-                                    placeholder="Contoh: 0812 3456 7890"
+                                    placeholder="Contoh: 081234567890"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 >
-                            </div>
+                            </div>                  
 
                             <div>
                                 <label for="cart-customer-address" class="mb-1.5 block text-sm font-medium text-gray-700">Alamat lengkap</label>
