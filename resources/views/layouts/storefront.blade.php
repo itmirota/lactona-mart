@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Lactona Mart</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('lactona-logo.png') }}">
     <!-- Memuat Tailwind CSS melalui Vite -->
@@ -14,6 +15,7 @@
     @keydown.escape.window="$store.cart.handleEscape()"
     data-whatsapp-number="{{ preg_replace('/\D+/', '', (string) config('services.whatsapp.admin_number')) }}"
     data-cart-products-url="{{ route('cart.products') }}"
+    data-checkout-url="{{ route('checkout.store') }}"
     class="font-sans text-gray-800 antialiased bg-gray-50 relative"
 >
     <!-- Top Bar -->
@@ -112,7 +114,7 @@
                 <li><a href="/produk-kami" class="block hover:text-brand-accent transition-colors">PRODUK</a></li>
                 <li><a href="#" class="block hover:text-brand-accent transition-colors">COLLECTION</a></li>
                 <li><a href="#" class="block hover:text-brand-accent transition-colors">ABOUT US</a></li>
-                <li><a href="{{ route('admin.products.index') }}" class="block text-brand-accent hover:underline font-semibold transition-colors">ADMIN PANEL</a></li>
+                <!-- <li><a href="{{ route('admin.products.index') }}" class="block text-brand-accent hover:underline font-semibold transition-colors">ADMIN PANEL</a></li> -->
                 <li class="pt-4 border-t border-brand-teal/30">
                      <!-- Input pencarian khusus mobile -->
                     <div class="relative text-gray-800">

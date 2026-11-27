@@ -71,6 +71,46 @@
                     <textarea name="description" id="description" rows="4" placeholder="Deskripsi singkat produk..." class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-brand-dark focus:ring-brand-dark">{{ old('description') }}</textarea>
                     @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
+
+                <!-- Status Produk -->
+                <div class="md:col-span-2">
+                    <div class="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                        <div>
+                            <label for="is_active" class="text-sm font-semibold text-gray-800">
+                                Status Produk
+                            </label>
+
+                            <p class="mt-1 text-xs text-gray-500">
+                                Aktifkan produk agar dapat ditampilkan di katalog Lactona Mart.
+                            </p>
+                        </div>
+
+                        <label class="relative inline-flex cursor-pointer items-center">
+                            <input
+                                type="hidden"
+                                name="is_active"
+                                value="0"
+                            >
+
+                            <input
+                                type="checkbox"
+                                name="is_active"
+                                id="is_active"
+                                value="1"
+                                @checked(old('is_active', true))
+                                class="peer sr-only"
+                            >
+
+                            <span class="h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-brand-dark"></span>
+
+                            <span class="pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5"></span>
+                        </label>
+                    </div>
+
+                    @error('is_active')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
                     
                 <div class="md:col-span-2">
                     <label class="mb-1 block text-sm font-medium text-gray-700">

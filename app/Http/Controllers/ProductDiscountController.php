@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductDiscount;
+use App\Services\ActivityLogger;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -78,8 +79,25 @@ class ProductDiscountController extends Controller
         unset($validated['product_ids']);
 
         DB::transaction(function () use ($validated, $productIds, $request): void {
-            $discount = ProductDiscount::create($validated + ['is_active' => $request->boolean('is_active')]);
+            $discount = ProductDiscount::create(
+                $validated + ['is_active' => $request->boolean('is_active')]
+            );
+
             $discount->products()->sync($productIds);
+
+            ActivityLogger::log(
+                'created',
+                'Promo Diskon',
+                "Menambahkan promo {$discount->promotion_name}",
+                $discount,
+                [
+                    'promotion_name' => $discount->promotion_name,
+                    'discount_type' => $discount->discount_type,
+                    'discount_value' => $discount->discount_value,
+                    'is_active' => $discount->is_active,
+                    'product_ids' => $productIds,
+                ]
+            );
         });
 
         return redirect()->route('admin.discounts.index')->with('success', 'Promo diskon berhasil ditambahkan.');
@@ -101,8 +119,36 @@ class ProductDiscountController extends Controller
         unset($validated['product_ids']);
 
         DB::transaction(function () use ($discount, $validated, $productIds, $request): void {
-            $discount->update($validated + ['is_active' => $request->boolean('is_active')]);
+            $oldData = [
+                'promotion_name' => $discount->promotion_name,
+                'discount_type' => $discount->discount_type,
+                'discount_value' => $discount->discount_value,
+                'is_active' => $discount->is_active,
+                'product_ids' => $discount->products()->pluck('products.id')->toArray(),
+            ];
+
+            $discount->update(
+                $validated + ['is_active' => $request->boolean('is_active')]
+            );
+
             $discount->products()->sync($productIds);
+
+            ActivityLogger::log(
+                'updated',
+                'Promo Diskon',
+                "Memperbarui promo {$discount->promotion_name}",
+                $discount,
+                [
+                    'old' => $oldData,
+                    'new' => [
+                        'promotion_name' => $discount->promotion_name,
+                        'discount_type' => $discount->discount_type,
+                        'discount_value' => $discount->discount_value,
+                        'is_active' => $discount->is_active,
+                        'product_ids' => $productIds,
+                    ],
+                ]
+            );
         });
 
         return redirect()->route('admin.discounts.index')->with('success', 'Promo diskon berhasil diperbarui.');
@@ -110,6 +156,18 @@ class ProductDiscountController extends Controller
 
     public function destroy(ProductDiscount $discount): RedirectResponse
     {
+        ActivityLogger::log(
+            'deleted',
+            'Promo Diskon',
+            "Menghapus promo {$discount->promotion_name}",
+            $discount,
+            [
+                'promotion_name' => $discount->promotion_name,
+                'discount_type' => $discount->discount_type,
+                'discount_value' => $discount->discount_value,
+            ]
+        );
+
         $discount->delete();
 
         return redirect()->route('admin.discounts.index')->with('success', 'Promo diskon berhasil dihapus.');

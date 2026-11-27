@@ -2,7 +2,7 @@
 @section('title', 'Produk')
 @section('page-heading', 'Manajemen Produk')
 @section('content')
-<div class="max-w-7xl mx-auto">
+<div class="p-6 bg-white border border-gray-100 rounded-xl shadow-sm">
     <!-- Bagian Header & Tombol Tambah -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 class="text-2xl font-bold text-gray-800">Daftar Produk</h1>
@@ -27,11 +27,13 @@
                 <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-600 uppercase tracking-wider">
                     <th class="p-4 font-semibold">ID</th>
                     <th class="p-4 font-semibold">Gambar</th>
-                    <th class="p-4 font-semibold">Kategori</th>
                     <th class="p-4 font-semibold">Nama Produk</th>
-                    <th class="p-4 font-semibold">Varian</th>
                     <th class="p-4 font-semibold">Harga</th>
+                    <th class="p-4 font-semibold">Kategori</th>
+                    <th class="p-4 font-semibold">Varian</th>
+                    <th class="p-4 font-semibold text-center">Stok</th>
                     <th class="p-4 font-semibold hidden md:table-cell">Keterangan</th>
+                    <th class="p-4 font-semibold text-center">Status</th>
                     <th class="p-4 font-semibold text-center">Aksi</th>
                 </tr>
             </thead>
@@ -51,15 +53,18 @@
                         @endif
                     </td>
                     
+                    <!-- Kolom Nama -->
+                    <td class="p-4 font-medium text-gray-600">{{ $product->name }}</td>
+
+                    <!-- Kolom Harga -->
+                    <td class="p-4 text-gray-600">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
+
                     <!-- Kolom Kategori (Mengambil nama kategori dari relasi model) -->
                     <td class="p-4">
                         <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-medium border border-blue-100">
                             {{ $product->category ? $product->category->name : 'Tanpa Kategori' }}
                         </span>
                     </td>
-                    
-                    <!-- Kolom Nama -->
-                    <td class="p-4 font-medium text-gray-800">{{ $product->name }}</td>
 
                     <!-- Kolom Variant -->
                     <td class="p-4 font-medium text-gray-800">
@@ -67,12 +72,18 @@
                             $activeTypes = $product->variantTypes->filter(
                                 fn($type) => $type->variants->contains('is_active', true)
                             );
+
+                            $variantColors = [
+                                'bg-cyan-100 text-cyan-800 border-cyan-200',
+                                'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                'bg-purple-100 text-purple-800 border-purple-200',
+                            ];
                         @endphp
 
                         @if($activeTypes->isNotEmpty())
                             <div class="flex flex-wrap gap-1">
                                 @foreach($activeTypes as $type)
-                                    <span class="bg-green-100 text-green-800 px-2.5 py-1 rounded-full text-xs font-medium border border-green-200">
+                                    <span class="{{ $variantColors[$loop->index % 3] }} px-2.5 py-1 rounded-full text-xs font-medium border">
                                         {{ $type->name }}
                                     </span>
                                 @endforeach
@@ -84,12 +95,48 @@
                         @endif
                     </td>
 
-                    <!-- Kolom Harga -->
-                    <td class="p-4 text-gray-600">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
+                    <!-- Kolom Stok -->
+                    <td class="text-center">
+                        @php
+                            $hasVariants = $product->variantTypes->isNotEmpty();
+
+                            $totalStock = $hasVariants
+                                ? $product->variantTypes
+                                    ->flatMap(fn($type) => $type->variants)
+                                    ->where('is_active', true)
+                                    ->sum('stock')
+                                : $product->stock;
+                        @endphp
+
+                        @if($totalStock > 0)
+                            <span class="text-gray-600 text-xs font-medium">
+                                {{ number_format($totalStock) }} pcs
+                            </span>
+                        @else
+                            <span class="text-red-700 text-xs font-medium">
+                                Stok Habis
+                            </span>
+                        @endif
+                    </td>
                     
                     <!-- Kolom Keterangan (Dibatasi 40 karakter agar tabel tidak memanjang) -->
                     <td class="p-4 text-gray-500 hidden md:table-cell">
                         {{ Str::limit($product->description, 40, '...') }}
+                    </td>
+
+                    <!-- Kolom Status -->
+                    <td class="p-4 text-center">
+                        @if($product->is_active)
+                            <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-green-200">
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                Aktif
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1.5 bg-red-50 text-red-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-red-200">
+                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                Tidak Aktif
+                            </span>
+                        @endif
                     </td>
                     
                     <!-- Kolom Aksi (Edit & Hapus) -->
@@ -112,7 +159,7 @@
                 @empty
                 <!-- Tampilan jika database masih kosong -->
                 <tr>
-                    <td colspan="8" class="p-8 text-center text-gray-500">
+                    <td colspan="10" class="p-8 text-center text-gray-500">
                         <div class="flex flex-col items-center justify-center">
                             <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                             <p>Belum ada data produk.</p>

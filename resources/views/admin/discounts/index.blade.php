@@ -4,7 +4,7 @@
 @section('page-heading', 'Manajemen Diskon')
 
 @section('content')
-<div class="mx-auto max-w-7xl space-y-6">
+<div class="p-6 space-y-6 bg-white border border-gray-100 rounded-xl shadow-sm">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">Promo dan Diskon</h1>

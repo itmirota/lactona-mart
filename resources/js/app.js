@@ -118,9 +118,16 @@ Alpine.store('cart', {
                 name: String(product.name),
                 image: String(product.image || ''),
                 unitPrice: Math.max(0, Math.round(Number(product.unitPrice) || 0)),
-                variantLabel: variants
-                    .map(variant => String(variant.typeName) + ': ' + String(variant.name))
-                    .join(' / '),
+                variants: variants.map(variant => ({
+                    typeId: Number(variant.typeId),
+                    variantId: Number(variant.variantId),
+                    typeName: String(variant.typeName),
+                    name: String(variant.name),
+                })),
+
+                variantLabel: variants.map(variant =>
+                    String(variant.typeName) + ': ' + String(variant.name)
+                ).join(' / '),
                 quantity: 1,
             });
         }
@@ -362,7 +369,8 @@ Alpine.store('cart', {
         }
     },
 
-    sendToWhatsapp(form) {
+    
+    async sendToWhatsapp(form) {
         if (this.items.length === 0 || !form.reportValidity()) {
             return;
         }
@@ -374,37 +382,96 @@ Alpine.store('cart', {
         }
 
         if (!adminNumber) {
+            alert('Nomor WhatsApp admin belum tersedia.');
             return;
         }
 
         const formData = new FormData(form);
-        const orderNumber = this.nextOrderNumber();
-        const itemDetails = this.items.map(item => (
-            '- ' + item.name
-            + (item.variantLabel ? ' - ' + item.variantLabel : '')
-            + ' (x' + item.quantity + ') = Rp'
-            + this.formatPrice(item.unitPrice * item.quantity)
-        )).join('\n');
-        const message = [
-            'Halo Admin Lactona Mart, saya ingin memesan barang:',
-            '',
-            '*Nomor Pesanan:* #' + orderNumber,
-            '*Nama:* ' + String(formData.get('name') || '').trim(),
-            '*Alamat:* ' + String(formData.get('address') || '').trim(),
-            '',
-            '*Rincian Pesanan:*',
-            itemDetails,
-            '',
-            '*Total Pembayaran: Rp ' + this.formatPrice(this.subtotal) + '*',
-            '',
-            'Mohon info selanjutnya untuk proses pembayaran. Terima kasih.',
-        ].join('\n');
 
-        window.open(
-            'https://wa.me/' + adminNumber + '?text=' + encodeURIComponent(message),
-            '_blank',
-            'noopener,noreferrer'
-        );
+        // Buka tab terlebih dahulu agar tidak diblokir browser.
+        const whatsappWindow = window.open('about:blank', '_blank');
+
+        if (!whatsappWindow) {
+            alert('Browser memblokir tab WhatsApp. Izinkan pop-up untuk situs ini, lalu coba kembali.');
+            return;
+        }
+
+        whatsappWindow.opener = null;
+
+        const csrfToken = document.querySelector(
+            'meta[name="csrf-token"]'
+        )?.content || '';
+
+        const payload = {
+            name: String(formData.get('name') || '').trim(),
+            phone: String(formData.get('phone') || '').trim(),
+            address: String(formData.get('address') || '').trim(),
+            items: this.items.map(item => ({
+                productId: Number(item.productId),
+                quantity: Number(item.quantity),
+                variants: (Array.isArray(item.variants) ? item.variants : [])
+                    .reduce((result, variant) => {
+                        result[variant.typeId] = variant.variantId;
+                        return result;
+                    }, {}),
+            })),
+        };
+
+        try {
+            const response = await fetch(document.body.dataset.checkoutUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    result.message || 'Pesanan gagal disimpan. Silakan coba kembali.'
+                );
+            }
+
+            const itemDetails = this.items.map(item => (
+                '- ' + item.name
+                + (item.variantLabel ? ' - ' + item.variantLabel : '')
+                + ' (x' + item.quantity + ') = Rp'
+                + this.formatPrice(item.unitPrice * item.quantity)
+            )).join('\n');
+
+            const message = [
+                'Halo Admin Lactona Mart, saya ingin memesan barang:',
+                '',
+                '*Nomor Pesanan:* #' + result.order_number,
+                '*Nama:* ' + payload.name,
+                '*Alamat:* ' + payload.address,
+                '',
+                '*Rincian Pesanan:*',
+                itemDetails,
+                '',
+                '*Total Pembayaran: Rp ' + this.formatPrice(result.total_amount) + '*',
+                '',
+                'Mohon info selanjutnya untuk proses pembayaran. Terima kasih.',
+            ].join('\n');
+
+            const whatsappUrl = 'https://wa.me/' + adminNumber
+                + '?text=' + encodeURIComponent(message);
+
+            whatsappWindow.location.href = whatsappUrl;
+
+        } catch (error) {
+            whatsappWindow.close();
+
+            console.error('Checkout error:', error);
+
+            alert(
+                error.message || 'Terjadi kesalahan saat menyimpan pesanan.'
+            );
+        }
     },
 });
 

@@ -17,7 +17,9 @@ class Product extends Model
         'price',
         'description',
         'image',
+        'stock',
         'nutrition_facts',
+        'is_active',
     ];
 
     /**
@@ -29,6 +31,7 @@ class Product extends Model
     {
         return [
             'nutrition_facts' => 'array',
+            'is_active' => 'boolean',
         ];
     }
 

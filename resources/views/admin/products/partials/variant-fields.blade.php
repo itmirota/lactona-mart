@@ -22,6 +22,43 @@
     $initialVariantTypes = old('variant_types', $existingVariantTypes);
 @endphp
 
+{{-- Stok Produk Utama: hanya untuk produk tanpa varian --}}
+<div
+    id="product-stock-wrapper"
+    class="mb-6 rounded-xl border border-gray-200 p-5"
+>
+    <div class="mb-3">
+        <h3 class="font-semibold text-gray-800">Stok Produk</h3>
+        <p class="mt-1 text-sm text-gray-500">
+            Atur jumlah stok produk jika produk ini tidak memiliki varian.
+        </p>
+    </div>
+
+    <div class="max-w-sm">
+        <label for="product-stock" class="mb-1 block text-sm font-medium text-gray-700">
+            Jumlah Stok
+        </label>
+
+        <div class="flex items-center gap-2">
+            <input
+                type="number"
+                name="stock"
+                id="product-stock"
+                value="{{ old('stock', isset($product) ? $product->stock : 0) }}"
+                min="0"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-dark focus:ring-brand-dark"
+                placeholder="Contoh: 100"
+            >
+
+            <span class="text-sm text-gray-500">pcs</span>
+        </div>
+
+        @error('stock')
+            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+        @enderror
+    </div>
+</div>
+
 <div
     id="variant-builder"
     data-initial="{{ json_encode($initialVariantTypes, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP) }}"
@@ -61,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const container = document.getElementById('variant-types-container');
     const emptyMessage = document.getElementById('variant-empty-message');
     const addTypeButton = document.getElementById('add-variant-type');
+    const productStockWrapper = document.getElementById('product-stock-wrapper');
 
     let variantTypes = JSON.parse(builder.dataset.initial || '[]');
 
@@ -78,6 +116,11 @@ document.addEventListener('DOMContentLoaded', function () {
         container.innerHTML = '';
 
         emptyMessage.classList.toggle('hidden', variantTypes.length > 0);
+
+        productStockWrapper.classList.toggle(
+            'hidden',
+            variantTypes.length > 0
+        );
 
         variantTypes.forEach((type, typeIndex) => {
             const typeElement = document.createElement('div');

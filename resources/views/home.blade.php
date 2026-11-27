@@ -2,7 +2,14 @@
 
 @section('content')
     <!-- Bagian Hero -->
-    <section class="relative w-full h-[700px] bg-brand-teal flex items-center bg-cover bg-center" style="background-image: url('{{ asset('storage/images/hero-model.jpg') }}')">
+@php
+    $heroImage = asset('storage/images/hero-model.jpg');
+@endphp
+
+    <section
+        class="relative w-full h-[700px] bg-brand-teal flex items-center bg-cover bg-center"
+        style="background-image: url('{{ $heroImage }}');"
+    >
         <!-- Overlay Gradasi -->
         <div class="absolute inset-0 bg-gradient-to-r from-brand-dark/90 via-brand-teal/60 to-transparent"></div>
         
@@ -188,7 +195,7 @@
                     {{-- Tombol Aksi --}}
                     <div class="flex space-x-2">
                         <a
-                            href="{{ route('products.detail', $product) }}"
+                            href="{{ route('detail', $product->id) }}"
                             class="text-center flex-1 bg-brand-dark hover:bg-brand-teal text-white text-xs font-bold py-2.5 rounded transition-colors uppercase tracking-wide"
                         >
                             Lihat Detail &gt;

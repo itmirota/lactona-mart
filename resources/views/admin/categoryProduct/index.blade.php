@@ -3,7 +3,7 @@
 @section('title', 'Kategori Produk')
 @section('page-heading', 'Manajemen Kategori Produk')
 @section('content')
-<div class="max-w-6xl mx-auto">
+<div class="p-6 bg-white border border-gray-100 rounded-xl shadow-sm">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Manajemen Kategori Produk</h1>

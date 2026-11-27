@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CategoryProduct;
+use App\Services\ActivityLogger;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,9 +40,19 @@ class CategoryProductController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        CategoryProduct::create([
+        $categoryProduct = CategoryProduct::create([
             'name' => $request->name,
         ]);
+
+        ActivityLogger::log(
+            'created',
+            'Kategori',
+            "Menambahkan kategori {$categoryProduct->name}",
+            $categoryProduct,
+            [
+                'name' => $categoryProduct->name,
+            ]
+        );
 
         return redirect()->route('admin.categoryProducts.index')->with('success', 'Kategori berhasil ditambahkan!');
     }
@@ -63,9 +74,26 @@ class CategoryProductController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
+        $oldName = $categoryProduct->name;
+
         $categoryProduct->update([
             'name' => $request->name,
         ]);
+
+        ActivityLogger::log(
+            'updated',
+            'Kategori',
+            "Mengubah kategori {$oldName} menjadi {$categoryProduct->name}",
+            $categoryProduct,
+            [
+                'old' => [
+                    'name' => $oldName,
+                ],
+                'new' => [
+                    'name' => $categoryProduct->name,
+                ],
+            ]
+        );
 
         return redirect()->route('admin.categoryProducts.index')->with('success', 'Kategori berhasil diperbarui!');
     }
@@ -75,6 +103,16 @@ class CategoryProductController extends Controller
      */
     public function destroy(CategoryProduct $categoryProduct): RedirectResponse
     {
+        ActivityLogger::log(
+            'deleted',
+            'Kategori',
+            "Menghapus kategori {$categoryProduct->name}",
+            $categoryProduct,
+            [
+                'name' => $categoryProduct->name,
+            ]
+        );
+
         $categoryProduct->delete();
 
         return redirect()->route('admin.categoryProducts.index')->with('success', 'Kategori berhasil dihapus!');

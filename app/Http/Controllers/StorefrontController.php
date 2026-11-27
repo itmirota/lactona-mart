@@ -12,9 +12,11 @@ use Illuminate\Support\Facades\Storage;
 
 class StorefrontController extends Controller
 {
+
     public function home(): View
     {
         $products = Product::with(['category', 'currentDiscounts'])
+            ->where('is_active', true)
             ->latest()
             ->take(4)
             ->get();
@@ -25,6 +27,7 @@ class StorefrontController extends Controller
     public function products(): View
     {
         $products = Product::with(['category', 'currentDiscounts'])
+            ->where('is_active', true)
             ->latest()
             ->paginate(12);
 
@@ -83,12 +86,21 @@ class StorefrontController extends Controller
     public function detail(?Product $product = null): View
     {
         if (! $product || ! $product->exists) {
-            $product = Product::with([
-                'category',
-                'currentDiscounts',
-                'variantTypes.variants',
-            ])->first();
+            $product = Product::where('is_active', true)
+                ->with([
+                    'category',
+                    'currentDiscounts',
+                    'variantTypes.variants',
+                ])
+                ->first();
+
+            if (! $product) {
+                abort(404);
+            }
         } else {
+            // Produk nonaktif tidak boleh diakses pengunjung.
+            abort_unless($product->is_active, 404);
+
             $product->loadMissing([
                 'category',
                 'currentDiscounts',
