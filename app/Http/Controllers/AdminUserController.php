@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,6 +50,18 @@ class AdminUserController extends Controller
         $user = User::create($validated);
         $user->assignRole(User::ROLE_ADMIN);
 
+        ActivityLogger::log(
+            'created',
+            'Akun Admin',
+            "Membuat akun admin {$user->name}",
+            $user,
+            [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => User::ROLE_ADMIN,
+            ]
+        );
+
         return redirect()
             ->route('admin.users.index')
             ->with('success', 'Akun admin berhasil dibuat.');
@@ -64,6 +77,12 @@ class AdminUserController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $this->ensureManagedAdmin($user);
+
+        $oldData = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'is_active' => $user->is_active,
+        ];
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -82,6 +101,21 @@ class AdminUserController extends Controller
 
         $user->save();
 
+        ActivityLogger::log(
+            'updated',
+            'Akun Admin',
+            "Memperbarui akun admin {$user->name}",
+            $user,
+            [
+                'old' => $oldData,
+                'new' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'is_active' => $user->is_active,
+                ],
+            ]
+        );
+
         return redirect()
             ->route('admin.users.index')
             ->with('success', 'Akun admin berhasil diperbarui.');
@@ -90,6 +124,18 @@ class AdminUserController extends Controller
     public function destroy(User $user): RedirectResponse
     {
         $this->ensureManagedAdmin($user);
+
+        ActivityLogger::log(
+            'deleted',
+            'Akun Admin',
+            "Menghapus akun admin {$user->name}",
+            $user,
+            [
+                'name' => $user->name,
+                'email' => $user->email,
+            ]
+        );
+
         $user->delete();
 
         return redirect()

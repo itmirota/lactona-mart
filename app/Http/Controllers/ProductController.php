@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CategoryProduct;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\ActivityLogger;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -221,12 +222,59 @@ class ProductController extends Controller
         }
     }
 
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(): View
+    public function search(Request $request)
     {
-        $products = Product::with(['category', 'currentDiscounts', 'variantTypes.variants', 'images',])->latest()->get();
+        $request->validate([
+            'q' => 'nullable|string|max:100',
+        ]);
+
+        $keyword = trim($request->query('q', ''));
+
+        if ($keyword === '') {
+            return response()->json([]);
+        }
+
+        $products = Product::with('category:id,name')
+            ->where(function ($query) use ($keyword) {
+                $query->where('name', 'like', "%{$keyword}%")
+                    ->orWhereHas('category', function ($categoryQuery) use ($keyword) {
+                        $categoryQuery->where('name', 'like', "%{$keyword}%");
+                    });
+            })
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
+
+        return response()->json(
+            $products->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'category' => $product->category?->name ?? 'Tanpa Kategori',
+                    'price' => number_format($product->price, 0, ',', '.'),
+                    'url' => route('admin.products.edit', $product->id),
+                ];
+            })
+        );
+    }
+
+    public function index(Request $request): View
+    {
+        $query = Product::with([
+            'category',
+            'currentDiscounts',
+            'variantTypes.variants',
+            'images',
+        ]);
+
+        // Filter berdasarkan status produk dari dashboard.
+        if ($request->query('status') === 'active') {
+            $query->where('is_active', true);
+        } elseif ($request->query('status') === 'inactive') {
+            $query->where('is_active', false);
+        }
+
+        $products = $query->latest()->get();
 
         return view('admin.products.index', compact('products'));
     }
@@ -254,6 +302,8 @@ class ProductController extends Controller
                 'category_id' => 'required|exists:category_product,id',
                 'name' => 'required|string|max:255',
                 'price' => 'required|numeric|min:0',
+                'is_active' => 'required|boolean',
+                'stock' => 'nullable|integer|min:0',
                 'description' => 'nullable|string',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
                 'gallery_images' => 'nullable|array',
@@ -311,8 +361,13 @@ class ProductController extends Controller
             'category_id' => $validated['category_id'],
             'name' => $validated['name'],
             'price' => $validated['price'],
+            'is_active' => (bool) $validated['is_active'],
             'description' => $validated['description'] ?? null,
             'image' => $imagePath,
+            'stock' => !empty($validated['variant_types'])
+            ? 0
+            : ($validated['stock'] ?? 0),
+
             'nutrition_facts' => $nutritionEnabled
                 ? $validated['nutrition_facts']
                 : null,
@@ -329,6 +384,19 @@ class ProductController extends Controller
                 $validated['variant_types']
             );
         }
+
+        ActivityLogger::log(
+            'created',
+            'Produk',
+            "Menambahkan produk {$product->name}",
+            $product,
+            [
+                'name' => $product->name,
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'is_active' => $product->is_active,
+            ]
+        );
 
         return redirect()
             ->route('admin.products.index')
@@ -363,6 +431,8 @@ class ProductController extends Controller
                 'category_id' => 'required|exists:category_product,id',
                 'name' => 'required|string|max:255',
                 'price' => 'required|numeric|min:0',
+                'is_active' => 'required|boolean',
+                'stock' => 'nullable|integer|min:0',
                 'description' => 'nullable|string',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
                 'gallery_images' => 'nullable|array',
@@ -383,6 +453,13 @@ class ProductController extends Controller
             );
         }
 
+        $oldData = $product->only([
+            'name',
+            'category_id',
+            'price',
+            'stock',
+            'is_active',
+        ]);
         $oldMainImage = $product->image;
         $imagePath = $oldMainImage;
 
@@ -392,14 +469,12 @@ class ProductController extends Controller
         $removeCurrentImage = $request->boolean('remove_current_image');
         $removeGalleryIds = $request->input('remove_gallery_images', []);
 
-        // Pastikan gambar galeri yang akan dihapus benar-benar milik produk ini.
         $removedGalleryImages = $product->images()
             ->whereIn('id', $removeGalleryIds)
             ->get();
 
         $selectedGalleryImage = null;
 
-        // Jika gambar utama dipilih dari galeri yang sudah tersimpan.
         if (preg_match('/^gallery:(\d+)$/', $primaryChoice, $matches)) {
             $selectedGalleryImage = $product->images()
                 ->whereKey((int) $matches[1])
@@ -408,7 +483,6 @@ class ProductController extends Controller
             $imagePath = $selectedGalleryImage->image;
         }
 
-        // Jika gambar utama dipilih dari file baru.
         elseif (preg_match('/^new:(\d+)$/', $primaryChoice, $matches)) {
             $primaryIndex = (int) $matches[1];
 
@@ -422,31 +496,31 @@ class ProductController extends Controller
                 ->store('products/gallery', 'public');
         }
 
-        // Jika masih menggunakan input gambar utama versi lama.
         elseif ($request->hasFile('image')) {
             $imagePath = $request->file('image')
                 ->store('products', 'public');
         }
 
-        // Jika gambar utama lama dihapus dan tidak ada gambar pengganti.
         elseif ($removeCurrentImage && $primaryChoice === 'current') {
             $imagePath = null;
         }
 
-        // Simpan perubahan data produk.
         $product->update([
             'category_id' => $validated['category_id'],
             'name' => $validated['name'],
             'price' => $validated['price'],
+            'is_active' => (bool) $validated['is_active'],
             'description' => $validated['description'] ?? null,
             'image' => $imagePath,
+            'stock' => !empty($validated['variant_types'])
+                ? 0
+                : ($validated['stock'] ?? 0),
+
             'nutrition_facts' => $nutritionEnabled
                 ? $validated['nutrition_facts']
                 : null,
         ]);
 
-        // Jika gambar utama baru berasal dari galeri,
-        // gambar utama lama dipindahkan menjadi gambar galeri.
         if ($selectedGalleryImage) {
             $selectedGalleryImage->delete();
 
@@ -458,8 +532,6 @@ class ProductController extends Controller
             }
         }
 
-        // Jika gambar utama baru berasal dari file upload,
-        // gambar utama lama dipindahkan ke galeri.
         elseif (
             str_starts_with($primaryChoice, 'new:')
             || $request->hasFile('image')
@@ -472,7 +544,6 @@ class ProductController extends Controller
             }
         }
 
-        // Simpan file baru yang bukan gambar utama.
         if ($request->hasFile('gallery_images')) {
             foreach ($uploadedImages as $index => $imageFile) {
                 $isPrimaryImage = (
@@ -493,8 +564,6 @@ class ProductController extends Controller
             }
         }
 
-        // Hapus gambar galeri yang dipilih.
-        // Gambar yang sedang dijadikan gambar utama tidak ikut dihapus.
         foreach ($removedGalleryImages as $galleryImage) {
             if (
                 $selectedGalleryImage
@@ -513,8 +582,6 @@ class ProductController extends Controller
             $galleryImage->delete();
         }
 
-        // Hapus file gambar utama lama jika memang diminta dihapus,
-        // bukan dipindahkan ke galeri dan bukan lagi gambar utama.
         if (
             $removeCurrentImage
             && $oldMainImage
@@ -532,6 +599,63 @@ class ProductController extends Controller
                 $validated['variant_types'] ?? []
             );
         }
+
+        if ($product->variantTypes()->exists()) {
+            $product->update([
+                'stock' => 0,
+            ]);
+        } else {
+            $product->update([
+                'stock' => $validated['stock'] ?? 0,
+            ]);
+        }
+
+        $oldPrice = (float) ($oldData['price'] ?? 0);
+        $newPrice = (float) $product->price;
+
+        $priceChanged = $oldPrice !== $newPrice;
+
+        $formattedOldPrice = 'Rp' . number_format($oldPrice, 0, ',', '.');
+        $formattedNewPrice = 'Rp' . number_format($newPrice, 0, ',', '.');
+
+        if ($priceChanged) {
+            $difference = $newPrice - $oldPrice;
+
+            $formattedDifference = 'Rp' . number_format(
+                abs($difference),
+                0,
+                ',',
+                '.'
+            );
+
+            $description = $difference > 0
+                ? "Menaikkan harga produk {$product->name} dari {$formattedOldPrice} menjadi {$formattedNewPrice} (naik {$formattedDifference})"
+                : "Menurunkan harga produk {$product->name} dari {$formattedOldPrice} menjadi {$formattedNewPrice} (turun {$formattedDifference})";
+        } else {
+            $description = "Memperbarui produk {$product->name}";
+        }
+
+        ActivityLogger::log(
+            'updated',
+            'Produk',
+            $description,
+            $product,
+            [
+                'old' => $oldData,
+                'new' => $product->only([
+                    'name',
+                    'category_id',
+                    'price',
+                    'stock',
+                    'is_active',
+                ]),
+                'price_change' => $priceChanged ? [
+                    'before' => $oldPrice,
+                    'after' => $newPrice,
+                    'difference' => $newPrice - $oldPrice,
+                ] : null,
+            ]
+        );
 
         return redirect()
             ->route('admin.products.index')
@@ -560,7 +684,6 @@ class ProductController extends Controller
             }
         }
 
-        // Hapus seluruh file gambar galeri.
         foreach ($product->images as $galleryImage) {
             if (
                 $galleryImage->image &&
@@ -569,6 +692,20 @@ class ProductController extends Controller
                 Storage::disk('public')->delete($galleryImage->image);
             }
         }
+
+        ActivityLogger::log(
+            'deleted',
+            'Produk',
+            "Menghapus produk {$product->name}",
+            $product,
+            [
+                'name' => $product->name,
+                'category_id' => $product->category_id,
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'is_active' => $product->is_active,
+            ]
+        );
 
         $product->delete();
 
